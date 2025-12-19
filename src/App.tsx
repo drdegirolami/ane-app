@@ -23,6 +23,10 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPacientes from "./pages/admin/AdminPacientes";
 import AdminContenidos from "./pages/admin/AdminContenidos";
+import AdminPlanning from "./pages/admin/AdminPlanning";
+import AdminMensajes from "./pages/admin/AdminMensajes";
+import AdminSituaciones from "./pages/admin/AdminSituaciones";
+import AdminAjustes from "./pages/admin/AdminAjustes";
 
 const queryClient = new QueryClient();
 
@@ -56,10 +60,10 @@ const App = () => (
                 <Route index element={<AdminDashboard />} />
                 <Route path="pacientes" element={<AdminPacientes />} />
                 <Route path="contenidos" element={<AdminContenidos />} />
-                <Route path="planning" element={<AdminDashboard />} />
-                <Route path="mensajes" element={<AdminDashboard />} />
-                <Route path="situaciones" element={<AdminDashboard />} />
-                <Route path="ajustes" element={<AdminDashboard />} />
+                <Route path="planning" element={<AdminPlanning />} />
+                <Route path="mensajes" element={<AdminMensajes />} />
+                <Route path="situaciones" element={<AdminSituaciones />} />
+                <Route path="ajustes" element={<AdminAjustes />} />
               </Route>
               
               {/* Catch-all */}
