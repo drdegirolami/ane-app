@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { PdfPreviewDialog } from '@/components/pdf/PdfPreviewDialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -46,8 +47,8 @@ export default function AdminPlanning() {
   
   // Preview dialog state
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState('');
+  const [previewFile, setPreviewFile] = useState<Blob | null>(null);
 
   useEffect(() => {
     fetchPatients();
@@ -195,8 +196,8 @@ export default function AdminPlanning() {
 
       if (error) throw error;
 
-      const url = URL.createObjectURL(data);
-      setPreviewUrl(url);
+      const pdfBlob = data.type === 'application/pdf' ? data : data.slice(0, data.size, 'application/pdf');
+      setPreviewFile(pdfBlob);
       setPreviewTitle(doc.title);
       setPreviewDialogOpen(true);
     } catch (error) {
@@ -456,26 +457,15 @@ export default function AdminPlanning() {
       )}
 
       {/* Preview Dialog */}
-      <Dialog open={previewDialogOpen} onOpenChange={(open) => {
-        setPreviewDialogOpen(open);
-        if (!open && previewUrl?.startsWith('blob:')) {
-          URL.revokeObjectURL(previewUrl);
-          setPreviewUrl(null);
-        }
-      }}>
-        <DialogContent className="max-w-4xl h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>{previewTitle}</DialogTitle>
-          </DialogHeader>
-          {previewUrl && (
-            <iframe
-              src={previewUrl}
-              className="w-full h-full rounded-lg"
-              title="Vista previa del documento"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <PdfPreviewDialog
+        open={previewDialogOpen}
+        onOpenChange={(open) => {
+          setPreviewDialogOpen(open);
+          if (!open) setPreviewFile(null);
+        }}
+        title={previewTitle}
+        file={previewFile}
+      />
     </div>
   );
 }

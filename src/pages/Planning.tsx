@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { FileText, Download, Loader2, Eye } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AppLayout from '@/components/layout/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { PdfPreviewDialog } from '@/components/pdf/PdfPreviewDialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -23,8 +23,8 @@ export default function Planning() {
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<PlanningDocument[]>([]);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState('');
+  const [previewFile, setPreviewFile] = useState<Blob | null>(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -63,8 +63,8 @@ export default function Planning() {
 
       if (error) throw error;
 
-      const url = URL.createObjectURL(data);
-      setPreviewUrl(url);
+      const pdfBlob = data.type === 'application/pdf' ? data : data.slice(0, data.size, 'application/pdf');
+      setPreviewFile(pdfBlob);
       setPreviewTitle(doc.title);
       setPreviewDialogOpen(true);
     } catch (error) {
@@ -188,26 +188,15 @@ export default function Planning() {
         </section>
 
         {/* Preview Dialog */}
-        <Dialog open={previewDialogOpen} onOpenChange={(open) => {
-          setPreviewDialogOpen(open);
-          if (!open && previewUrl?.startsWith('blob:')) {
-            URL.revokeObjectURL(previewUrl);
-            setPreviewUrl(null);
-          }
-        }}>
-          <DialogContent className="max-w-4xl h-[80vh]">
-            <DialogHeader>
-              <DialogTitle>{previewTitle}</DialogTitle>
-            </DialogHeader>
-            {previewUrl && (
-              <iframe
-                src={previewUrl}
-                className="w-full h-full rounded-lg"
-                title="Vista previa del documento"
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+        <PdfPreviewDialog
+          open={previewDialogOpen}
+          onOpenChange={(open) => {
+            setPreviewDialogOpen(open);
+            if (!open) setPreviewFile(null);
+          }}
+          title={previewTitle}
+          file={previewFile}
+        />
       </div>
     </AppLayout>
   );
