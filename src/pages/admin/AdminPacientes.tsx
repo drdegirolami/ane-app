@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
+import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock, Loader2, User, ClipboardList } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,16 @@ interface Patient {
   created_at: string | null;
 }
 
+interface Checkin {
+  id: string;
+  created_at: string | null;
+  week_rating: string | null;
+  anxiety_level: number | null;
+  plan_deviations: string | null;
+  difficult_moment: string | null;
+  adjustments_needed: string | null;
+}
+
 const statusConfig = {
   active: { label: 'Activo', icon: CheckCircle, color: 'text-green-500 bg-green-500/10' },
   suspended: { label: 'Suspendido', icon: XCircle, color: 'text-red-500 bg-red-500/10' },
@@ -43,6 +53,17 @@ export default function AdminPacientes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newPatient, setNewPatient] = useState({ email: '', password: '', fullName: '' });
+  
+  // Profile dialog state
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [editingProfile, setEditingProfile] = useState({ fullName: '', email: '' });
+  const [savingProfile, setSavingProfile] = useState(false);
+  
+  // Checkins dialog state
+  const [checkinsDialogOpen, setCheckinsDialogOpen] = useState(false);
+  const [checkins, setCheckins] = useState<Checkin[]>([]);
+  const [loadingCheckins, setLoadingCheckins] = useState(false);
 
   const fetchPatients = async () => {
     setLoading(true);
@@ -112,6 +133,58 @@ export default function AdminPacientes() {
       toast.success(`Estado actualizado a ${statusConfig[newStatus as keyof typeof statusConfig]?.label || newStatus}`);
       fetchPatients();
     }
+  };
+
+  const openProfileDialog = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setEditingProfile({
+      fullName: patient.full_name || '',
+      email: patient.email || '',
+    });
+    setProfileDialogOpen(true);
+  };
+
+  const saveProfile = async () => {
+    if (!selectedPatient) return;
+    
+    setSavingProfile(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        full_name: editingProfile.fullName,
+        email: editingProfile.email,
+      })
+      .eq('id', selectedPatient.id);
+
+    if (error) {
+      toast.error('Error al guardar perfil');
+      console.error(error);
+    } else {
+      toast.success('Perfil actualizado');
+      setProfileDialogOpen(false);
+      fetchPatients();
+    }
+    setSavingProfile(false);
+  };
+
+  const openCheckinsDialog = async (patient: Patient) => {
+    setSelectedPatient(patient);
+    setCheckinsDialogOpen(true);
+    setLoadingCheckins(true);
+    
+    const { data, error } = await supabase
+      .from('checkins')
+      .select('*')
+      .eq('user_id', patient.user_id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast.error('Error al cargar check-ins');
+      console.error(error);
+    } else {
+      setCheckins(data || []);
+    }
+    setLoadingCheckins(false);
   };
 
   const deletePatient = async (patientId: string, patientName: string) => {
@@ -219,11 +292,13 @@ export default function AdminPacientes() {
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => toast.info('Funcionalidad próximamente')}>
+                        <DropdownMenuContent align="end" className="bg-popover">
+                          <DropdownMenuItem onClick={() => openProfileDialog(patient)}>
+                            <User className="h-4 w-4 mr-2" />
                             Ver perfil
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toast.info('Funcionalidad próximamente')}>
+                          <DropdownMenuItem onClick={() => openCheckinsDialog(patient)}>
+                            <ClipboardList className="h-4 w-4 mr-2" />
                             Ver check-ins
                           </DropdownMenuItem>
                           {patientStatus === 'active' ? (
@@ -295,6 +370,139 @@ export default function AdminPacientes() {
             <Button onClick={createPatient} disabled={creating}>
               {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               Crear paciente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Dialog */}
+      <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Perfil del Paciente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="editFullName">Nombre completo</Label>
+              <Input
+                id="editFullName"
+                value={editingProfile.fullName}
+                onChange={(e) => setEditingProfile({ ...editingProfile, fullName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editEmail">Email</Label>
+              <Input
+                id="editEmail"
+                type="email"
+                value={editingProfile.email}
+                onChange={(e) => setEditingProfile({ ...editingProfile, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Estado</Label>
+              <p className="text-sm text-muted-foreground">
+                {statusConfig[selectedPatient?.status as keyof typeof statusConfig]?.label || 'Pendiente'}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Fecha de registro</Label>
+              <p className="text-sm text-muted-foreground">
+                {selectedPatient?.created_at 
+                  ? new Date(selectedPatient.created_at).toLocaleDateString('es-ES', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })
+                  : '-'
+                }
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setProfileDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={saveProfile} disabled={savingProfile}>
+              {savingProfile && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Guardar cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Checkins Dialog */}
+      <Dialog open={checkinsDialogOpen} onOpenChange={setCheckinsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Check-ins de {selectedPatient?.full_name || 'Paciente'}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {loadingCheckins ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : checkins.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Este paciente no tiene check-ins registrados
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {checkins.map((checkin) => (
+                  <Card key={checkin.id} className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-medium text-foreground">
+                        {checkin.created_at 
+                          ? new Date(checkin.created_at).toLocaleDateString('es-ES', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : '-'
+                        }
+                      </span>
+                      {checkin.week_rating && (
+                        <span className="px-2 py-1 rounded-full text-xs bg-primary/10 text-primary">
+                          {checkin.week_rating}
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid gap-2 text-sm">
+                      {checkin.anxiety_level !== null && (
+                        <div>
+                          <span className="text-muted-foreground">Nivel de ansiedad: </span>
+                          <span className="text-foreground">{checkin.anxiety_level}/10</span>
+                        </div>
+                      )}
+                      {checkin.plan_deviations && (
+                        <div>
+                          <span className="text-muted-foreground">Desviaciones del plan: </span>
+                          <span className="text-foreground">{checkin.plan_deviations}</span>
+                        </div>
+                      )}
+                      {checkin.difficult_moment && (
+                        <div>
+                          <span className="text-muted-foreground">Momento difícil: </span>
+                          <span className="text-foreground">{checkin.difficult_moment}</span>
+                        </div>
+                      )}
+                      {checkin.adjustments_needed && (
+                        <div>
+                          <span className="text-muted-foreground">Ajustes necesarios: </span>
+                          <span className="text-foreground">{checkin.adjustments_needed}</span>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCheckinsDialogOpen(false)}>
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>
