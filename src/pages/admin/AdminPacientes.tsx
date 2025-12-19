@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,14 +10,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-const patients = [
-  { id: 1, name: 'María García', email: 'maria@email.com', status: 'active', lastCheckin: 'Hace 2 días', week: 4 },
-  { id: 2, name: 'Juan Pérez', email: 'juan@email.com', status: 'active', lastCheckin: 'Hoy', week: 2 },
-  { id: 3, name: 'Ana López', email: 'ana@email.com', status: 'suspended', lastCheckin: 'Hace 1 semana', week: 8 },
-  { id: 4, name: 'Carlos Ruiz', email: 'carlos@email.com', status: 'pending', lastCheckin: 'Nunca', week: 1 },
-  { id: 5, name: 'Laura Martín', email: 'laura@email.com', status: 'active', lastCheckin: 'Ayer', week: 6 },
-];
+interface Patient {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  status: string | null;
+  created_at: string | null;
+}
 
 const statusConfig = {
   active: { label: 'Activo', icon: CheckCircle, color: 'text-green-500 bg-green-500/10' },
@@ -27,10 +30,65 @@ const statusConfig = {
 
 export default function AdminPacientes() {
   const [search, setSearch] = useState('');
-  
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPatients = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast.error('Error al cargar pacientes');
+      console.error(error);
+    } else {
+      setPatients(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  const updatePatientStatus = async (patientId: string, newStatus: string) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: newStatus })
+      .eq('id', patientId);
+
+    if (error) {
+      toast.error('Error al actualizar estado');
+      console.error(error);
+    } else {
+      toast.success(`Estado actualizado a ${statusConfig[newStatus as keyof typeof statusConfig]?.label || newStatus}`);
+      fetchPatients();
+    }
+  };
+
+  const deletePatient = async (patientId: string, patientName: string) => {
+    const confirmed = window.confirm(`¿Estás seguro de dar de baja a ${patientName}?`);
+    if (!confirmed) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', patientId);
+
+    if (error) {
+      toast.error('Error al dar de baja');
+      console.error(error);
+    } else {
+      toast.success('Paciente dado de baja');
+      fetchPatients();
+    }
+  };
+
   const filteredPatients = patients.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.email.toLowerCase().includes(search.toLowerCase())
+    (p.full_name?.toLowerCase().includes(search.toLowerCase()) || false) ||
+    (p.email?.toLowerCase().includes(search.toLowerCase()) || false)
   );
 
   return (
@@ -41,7 +99,7 @@ export default function AdminPacientes() {
             Pacientes
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gestión de accesos y estados
+            Gestión de accesos y estados ({patients.length} pacientes)
           </p>
         </div>
         <Button variant="wellness">
@@ -64,64 +122,89 @@ export default function AdminPacientes() {
       {/* Patient List */}
       <Card wellness>
         <CardContent className="p-0">
-          <div className="divide-y divide-border">
-            {filteredPatients.map((patient) => {
-              const status = statusConfig[patient.status as keyof typeof statusConfig];
-              const StatusIcon = status.icon;
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredPatients.length === 0 ? (
+            <div className="p-8 text-center text-muted-foreground">
+              No se encontraron pacientes
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {filteredPatients.map((patient) => {
+                const patientStatus = patient.status || 'pending';
+                const status = statusConfig[patientStatus as keyof typeof statusConfig] || statusConfig.pending;
+                const StatusIcon = status.icon;
 
-              return (
-                <div 
-                  key={patient.id}
-                  className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-bold text-primary">
-                        {patient.name.split(' ').map(n => n[0]).join('')}
-                      </span>
+                return (
+                  <div 
+                    key={patient.id}
+                    className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-bold text-primary">
+                          {patient.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) || '?'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">{patient.full_name || 'Sin nombre'}</p>
+                        <p className="text-sm text-muted-foreground">{patient.email || 'Sin email'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-foreground">{patient.name}</p>
-                      <p className="text-sm text-muted-foreground">{patient.email}</p>
+
+                    <div className="flex items-center gap-4">
+                      <div className="hidden sm:block text-right">
+                        <p className="text-xs text-muted-foreground">
+                          {patient.created_at ? new Date(patient.created_at).toLocaleDateString('es-ES') : '-'}
+                        </p>
+                      </div>
+                      
+                      <div className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                        status.color
+                      )}>
+                        <StatusIcon className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">{status.label}</span>
+                      </div>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => toast.info('Funcionalidad próximamente')}>
+                            Ver perfil
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toast.info('Funcionalidad próximamente')}>
+                            Ver check-ins
+                          </DropdownMenuItem>
+                          {patientStatus === 'active' ? (
+                            <DropdownMenuItem onClick={() => updatePatientStatus(patient.id, 'suspended')}>
+                              Suspender acceso
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => updatePatientStatus(patient.id, 'active')}>
+                              Activar acceso
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem 
+                            className="text-destructive"
+                            onClick={() => deletePatient(patient.id, patient.full_name || 'este paciente')}
+                          >
+                            Dar de baja
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="hidden sm:block text-right">
-                      <p className="text-sm text-muted-foreground">Semana {patient.week}</p>
-                      <p className="text-xs text-muted-foreground">{patient.lastCheckin}</p>
-                    </div>
-                    
-                    <div className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
-                      status.color
-                    )}>
-                      <StatusIcon className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">{status.label}</span>
-                    </div>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Ver perfil</DropdownMenuItem>
-                        <DropdownMenuItem>Ver check-ins</DropdownMenuItem>
-                        <DropdownMenuItem>
-                          {patient.status === 'active' ? 'Suspender acceso' : 'Activar acceso'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          Dar de baja
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
