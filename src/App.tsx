@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Patient pages
 import Index from "./pages/Index";
@@ -13,6 +15,7 @@ import Situaciones from "./pages/Situaciones";
 import Mensaje from "./pages/Mensaje";
 import Info from "./pages/Info";
 import Ajustes from "./pages/Ajustes";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
@@ -26,36 +29,45 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Patient Routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/planning" element={<Planning />} />
-            <Route path="/checkin" element={<Checkin />} />
-            <Route path="/situaciones" element={<Situaciones />} />
-            <Route path="/mensaje" element={<Mensaje />} />
-            <Route path="/info" element={<Info />} />
-            <Route path="/ajustes" element={<Ajustes />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="pacientes" element={<AdminPacientes />} />
-              <Route path="contenidos" element={<AdminContenidos />} />
-              <Route path="planning" element={<AdminDashboard />} />
-              <Route path="mensajes" element={<AdminDashboard />} />
-              <Route path="situaciones" element={<AdminDashboard />} />
-              <Route path="ajustes" element={<AdminDashboard />} />
-            </Route>
-            
-            {/* Catch-all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Auth Route */}
+              <Route path="/auth" element={<Auth />} />
+              
+              {/* Patient Routes - Protected */}
+              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+              <Route path="/planning" element={<ProtectedRoute><Planning /></ProtectedRoute>} />
+              <Route path="/checkin" element={<ProtectedRoute><Checkin /></ProtectedRoute>} />
+              <Route path="/situaciones" element={<ProtectedRoute><Situaciones /></ProtectedRoute>} />
+              <Route path="/mensaje" element={<ProtectedRoute><Mensaje /></ProtectedRoute>} />
+              <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
+              <Route path="/ajustes" element={<ProtectedRoute><Ajustes /></ProtectedRoute>} />
+              
+              {/* Admin Routes - Protected + Admin Only */}
+              <Route path="/admin" element={
+                <ProtectedRoute requireAdmin>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<AdminDashboard />} />
+                <Route path="pacientes" element={<AdminPacientes />} />
+                <Route path="contenidos" element={<AdminContenidos />} />
+                <Route path="planning" element={<AdminDashboard />} />
+                <Route path="mensajes" element={<AdminDashboard />} />
+                <Route path="situaciones" element={<AdminDashboard />} />
+                <Route path="ajustes" element={<AdminDashboard />} />
+              </Route>
+              
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

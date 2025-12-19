@@ -14,16 +14,261 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      checkin_questions: {
+        Row: {
+          id: string
+          question_key: string
+          question_text: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          question_key: string
+          question_text: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          question_key?: string
+          question_text?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      checkins: {
+        Row: {
+          adjustments_needed: string | null
+          anxiety_level: number | null
+          created_at: string | null
+          difficult_moment: string | null
+          id: string
+          plan_deviations: string | null
+          user_id: string
+          week_rating: string | null
+        }
+        Insert: {
+          adjustments_needed?: string | null
+          anxiety_level?: number | null
+          created_at?: string | null
+          difficult_moment?: string | null
+          id?: string
+          plan_deviations?: string | null
+          user_id: string
+          week_rating?: string | null
+        }
+        Update: {
+          adjustments_needed?: string | null
+          anxiety_level?: number | null
+          created_at?: string | null
+          difficult_moment?: string | null
+          id?: string
+          plan_deviations?: string | null
+          user_id?: string
+          week_rating?: string | null
+        }
+        Relationships: []
+      }
+      content_files: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          file_type: string
+          file_url: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          file_type: string
+          file_url?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          file_type?: string
+          file_url?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      difficult_situations: {
+        Row: {
+          category: string
+          id: string
+          sort_order: number | null
+          tips: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          id?: string
+          sort_order?: number | null
+          tips?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          id?: string
+          sort_order?: number | null
+          tips?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      doctor_messages: {
+        Row: {
+          audio_url: string | null
+          content: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      screen_texts: {
+        Row: {
+          content: string | null
+          id: string
+          screen_key: string
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          id?: string
+          screen_key: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          id?: string
+          screen_key?: string
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_planning: {
+        Row: {
+          breakfast: string | null
+          day_of_week: number
+          dinner: string | null
+          id: string
+          lunch: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          breakfast?: string | null
+          day_of_week: number
+          dinner?: string | null
+          id?: string
+          lunch?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          breakfast?: string | null
+          day_of_week?: number
+          dinner?: string | null
+          id?: string
+          lunch?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "patient"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +395,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "patient"],
+    },
   },
 } as const
