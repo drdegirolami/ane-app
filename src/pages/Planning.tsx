@@ -1,64 +1,80 @@
-import { useState } from 'react';
-import { FileText, ChevronDown, ChevronUp, Coffee, Sun, Moon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Download, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/components/layout/AppLayout';
-import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
-const weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-
-// Sample meal data - would come from admin panel in production
-const weeklyPlan = {
-  Lunes: {
-    desayuno: 'Yogur con frutas y avena',
-    almuerzo: 'Pollo grillado con ensalada',
-    cena: 'Sopa de verduras con tostadas',
-  },
-  Martes: {
-    desayuno: 'Tostadas integrales con palta',
-    almuerzo: 'Pescado al horno con vegetales',
-    cena: 'Omelette de espinaca',
-  },
-  Miércoles: {
-    desayuno: 'Licuado de banana y leche',
-    almuerzo: 'Ensalada de atún con legumbres',
-    cena: 'Wrap de pollo con verduras',
-  },
-  Jueves: {
-    desayuno: 'Avena cocida con manzana',
-    almuerzo: 'Milanesa de berenjena con arroz',
-    cena: 'Ensalada tibia de vegetales',
-  },
-  Viernes: {
-    desayuno: 'Huevos revueltos con pan integral',
-    almuerzo: 'Pasta con salsa de tomate natural',
-    cena: 'Pechuga de pollo con puré',
-  },
-  Sábado: {
-    desayuno: 'Pancakes de avena',
-    almuerzo: 'Carne magra con ensalada mixta',
-    cena: 'Pizza casera de vegetales',
-  },
-  Domingo: {
-    desayuno: 'Tostadas con queso y tomate',
-    almuerzo: 'Asado magro con ensaladas',
-    cena: 'Cena libre - porción moderada',
-  },
-};
-
-const getTodayIndex = () => {
-  const day = new Date().getDay();
-  return day === 0 ? 6 : day - 1; // Convert Sunday (0) to index 6
-};
+interface PlanningDocument {
+  id: string;
+  title: string;
+  description: string | null;
+  file_url: string;
+  file_name: string;
+  uploaded_at: string;
+}
 
 export default function Planning() {
-  const [expandedDay, setExpandedDay] = useState<string | null>(null);
-  const todayIndex = getTodayIndex();
-  const todayName = weekDays[todayIndex];
-  const todayPlan = weeklyPlan[todayName as keyof typeof weeklyPlan];
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<PlanningDocument[]>([]);
 
-  const toggleDay = (day: string) => {
-    setExpandedDay(expandedDay === day ? null : day);
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('patient_planning')
+        .select('id, title, description, file_url, file_name, uploaded_at')
+        .eq('patient_id', user.id)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los documentos",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadDocument = async (doc: PlanningDocument) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('planning-files')
+        .download(doc.file_url);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo descargar el documento",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -67,121 +83,74 @@ export default function Planning() {
         {/* Header */}
         <section className="animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">
-            Planning Semanal
+            Mi Planning
           </h1>
           <p className="text-muted-foreground mt-2">
-            Este es el resumen de tu semana. Los detalles y recetas están en el plan en PDF.
+            Aquí encontrarás tus documentos de planning y dieta personalizados.
           </p>
         </section>
 
-        {/* Today's Highlight */}
-        <section className="animate-slide-up stagger-1 opacity-0">
-          <Card wellness className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-primary">Hoy - {todayName}</CardTitle>
-                <div className="px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium">
-                  Tu día
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <MealItem icon={Coffee} label="Desayuno" meal={todayPlan.desayuno} />
-              <MealItem icon={Sun} label="Almuerzo" meal={todayPlan.almuerzo} />
-              <MealItem icon={Moon} label="Cena" meal={todayPlan.cena} />
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Weekly Overview */}
-        <section className="space-y-3 animate-slide-up stagger-2 opacity-0">
-          <h2 className="text-lg font-display font-semibold text-foreground">
-            Semana completa
-          </h2>
-          
-          {weekDays.map((day, index) => {
-            const plan = weeklyPlan[day as keyof typeof weeklyPlan];
-            const isExpanded = expandedDay === day;
-            const isToday = index === todayIndex;
-
-            return (
-              <Card 
-                key={day} 
-                wellness 
-                className={cn(
-                  "transition-all duration-300",
-                  isToday && "ring-2 ring-primary/30"
-                )}
-              >
-                <button
-                  onClick={() => toggleDay(day)}
-                  className="w-full text-left"
-                >
+        {/* Documents List */}
+        <section className="space-y-3 animate-slide-up stagger-1 opacity-0">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : documents.length === 0 ? (
+            <Card wellness>
+              <CardContent className="py-12 text-center">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                <h3 className="font-medium text-foreground mb-2">
+                  No tienes documentos aún
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Tu nutricionista subirá tu planning personalizado pronto.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <h2 className="text-lg font-display font-semibold text-foreground">
+                Tus documentos
+              </h2>
+              {documents.map((doc) => (
+                <Card key={doc.id} wellness>
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "w-10 h-10 rounded-xl flex items-center justify-center font-display font-semibold text-sm",
-                          isToday 
-                            ? "bg-primary text-primary-foreground" 
-                            : "bg-secondary text-secondary-foreground"
-                        )}>
-                          {day.slice(0, 2)}
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                          <FileText className="h-5 w-5 text-primary" />
                         </div>
-                        <div>
-                          <p className="font-medium text-foreground">{day}</p>
-                          {!isExpanded && (
-                            <p className="text-xs text-muted-foreground">
-                              {plan.almuerzo.split(' ').slice(0, 3).join(' ')}...
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-foreground truncate">
+                            {doc.title}
+                          </h3>
+                          {doc.description && (
+                            <p className="text-sm text-muted-foreground truncate">
+                              {doc.description}
                             </p>
                           )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {format(new Date(doc.uploaded_at), "d 'de' MMMM, yyyy", { locale: es })}
+                          </p>
                         </div>
                       </div>
-                      {isExpanded ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                      )}
+                      <Button
+                        variant="wellness"
+                        size="sm"
+                        onClick={() => downloadDocument(doc)}
+                      >
+                        <Download className="h-4 w-4" />
+                        Descargar
+                      </Button>
                     </div>
-                    
-                    {isExpanded && (
-                      <div className="mt-4 pt-4 border-t border-border space-y-3">
-                        <MealItem icon={Coffee} label="Desayuno" meal={plan.desayuno} />
-                        <MealItem icon={Sun} label="Almuerzo" meal={plan.almuerzo} />
-                        <MealItem icon={Moon} label="Cena" meal={plan.cena} />
-                      </div>
-                    )}
                   </CardContent>
-                </button>
-              </Card>
-            );
-          })}
-        </section>
-
-        {/* PDF Link */}
-        <section className="animate-slide-up stagger-3 opacity-0">
-          <Button variant="soft" className="w-full" size="lg">
-            <FileText className="h-5 w-5" />
-            Ver plan completo en PDF
-          </Button>
+                </Card>
+              ))}
+            </>
+          )}
         </section>
       </div>
     </AppLayout>
-  );
-}
-
-function MealItem({ icon: Icon, label, meal }: { icon: any; label: string; meal: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
-        <Icon className="h-4 w-4 text-secondary-foreground" />
-      </div>
-      <div>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          {label}
-        </p>
-        <p className="text-sm text-foreground mt-0.5">{meal}</p>
-      </div>
-    </div>
   );
 }
