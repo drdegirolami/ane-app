@@ -1,12 +1,23 @@
-import { Sun, Moon, Palette, Check } from 'lucide-react';
+import { Sun, Moon, Palette, Check, LogOut, Shield } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTheme, palettes } from '@/contexts/ThemeContext';
+import { useAuth } from '@/hooks/useAuth';
 import AppLayout from '@/components/layout/AppLayout';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function Ajustes() {
   const { mode, palette, setMode, setPalette } = useTheme();
+  const { signOut, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success('Sesión cerrada');
+    navigate('/auth');
+  };
 
   return (
     <AppLayout>
@@ -98,15 +109,31 @@ export default function Ajustes() {
           </Card>
         </section>
 
-        {/* Account Info (Placeholder) */}
-        <section className="animate-slide-up stagger-3 opacity-0">
-          <Card className="bg-muted/50 border-muted">
-            <CardContent className="p-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                Más opciones de configuración próximamente
-              </p>
-            </CardContent>
-          </Card>
+        {/* Account Section */}
+        <section className="animate-slide-up stagger-3 opacity-0 space-y-3">
+          {isAdmin && (
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-3 h-14"
+              onClick={() => navigate('/admin')}
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-primary" />
+              </div>
+              <span className="font-medium">Panel de Administrador</span>
+            </Button>
+          )}
+          
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-3 h-14 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={handleLogout}
+          >
+            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+              <LogOut className="h-5 w-5 text-destructive" />
+            </div>
+            <span className="font-medium">Cerrar Sesión</span>
+          </Button>
         </section>
       </div>
     </AppLayout>
