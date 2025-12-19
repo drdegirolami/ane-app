@@ -191,12 +191,11 @@ export default function AdminPlanning() {
     try {
       const { data, error } = await supabase.storage
         .from('planning-files')
-        .download(doc.file_url);
+        .createSignedUrl(doc.file_url, 3600);
 
       if (error) throw error;
 
-      const url = URL.createObjectURL(data);
-      setPreviewUrl(url);
+      setPreviewUrl(data.signedUrl);
       setPreviewTitle(doc.title);
       setPreviewDialogOpen(true);
     } catch (error) {
@@ -458,8 +457,7 @@ export default function AdminPlanning() {
       {/* Preview Dialog */}
       <Dialog open={previewDialogOpen} onOpenChange={(open) => {
         setPreviewDialogOpen(open);
-        if (!open && previewUrl) {
-          URL.revokeObjectURL(previewUrl);
+        if (!open) {
           setPreviewUrl(null);
         }
       }}>
