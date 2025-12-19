@@ -155,6 +155,39 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_planning: {
+        Row: {
+          description: string | null
+          file_name: string
+          file_url: string
+          id: string
+          patient_id: string
+          title: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          description?: string | null
+          file_name: string
+          file_url: string
+          id?: string
+          patient_id: string
+          title: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          description?: string | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          patient_id?: string
+          title?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -224,33 +257,6 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
-        }
-        Relationships: []
-      }
-      weekly_planning: {
-        Row: {
-          breakfast: string | null
-          day_of_week: number
-          dinner: string | null
-          id: string
-          lunch: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          breakfast?: string | null
-          day_of_week: number
-          dinner?: string | null
-          id?: string
-          lunch?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          breakfast?: string | null
-          day_of_week?: number
-          dinner?: string | null
-          id?: string
-          lunch?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }
