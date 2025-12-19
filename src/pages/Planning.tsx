@@ -59,18 +59,12 @@ export default function Planning() {
     try {
       const { data, error } = await supabase.storage
         .from('planning-files')
-        .createSignedUrl(doc.file_url, 3600);
+        .download(doc.file_url);
 
       if (error) throw error;
 
-      const signed = data?.signedUrl;
-      if (!signed) throw new Error('Missing signedUrl');
-
-      const backendUrl = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-      const base = `${backendUrl}/storage/v1`;
-      const iframeUrl = signed.startsWith('http') ? signed : `${base}${signed}`;
-
-      setPreviewUrl(iframeUrl);
+      const url = URL.createObjectURL(data);
+      setPreviewUrl(url);
       setPreviewTitle(doc.title);
       setPreviewDialogOpen(true);
     } catch (error) {
@@ -196,7 +190,8 @@ export default function Planning() {
         {/* Preview Dialog */}
         <Dialog open={previewDialogOpen} onOpenChange={(open) => {
           setPreviewDialogOpen(open);
-          if (!open) {
+          if (!open && previewUrl?.startsWith('blob:')) {
+            URL.revokeObjectURL(previewUrl);
             setPreviewUrl(null);
           }
         }}>
