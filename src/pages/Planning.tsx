@@ -63,7 +63,14 @@ export default function Planning() {
 
       if (error) throw error;
 
-      setPreviewUrl(data.signedUrl);
+      const signed = data?.signedUrl;
+      if (!signed) throw new Error('Missing signedUrl');
+
+      const backendUrl = String(import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
+      const base = `${backendUrl}/storage/v1`;
+      const iframeUrl = signed.startsWith('http') ? signed : `${base}${signed}`;
+
+      setPreviewUrl(iframeUrl);
       setPreviewTitle(doc.title);
       setPreviewDialogOpen(true);
     } catch (error) {
