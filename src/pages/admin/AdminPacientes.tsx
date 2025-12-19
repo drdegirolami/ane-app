@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -32,6 +40,9 @@ export default function AdminPacientes() {
   const [search, setSearch] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newPatient, setNewPatient] = useState({ email: '', password: '', fullName: '' });
 
   const fetchPatients = async () => {
     setLoading(true);
@@ -52,6 +63,41 @@ export default function AdminPacientes() {
   useEffect(() => {
     fetchPatients();
   }, []);
+
+  const createPatient = async () => {
+    if (!newPatient.email || !newPatient.password) {
+      toast.error('Email y contraseña son requeridos');
+      return;
+    }
+
+    if (newPatient.password.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    setCreating(true);
+    
+    const { data, error } = await supabase.auth.signUp({
+      email: newPatient.email,
+      password: newPatient.password,
+      options: {
+        data: {
+          full_name: newPatient.fullName,
+        },
+      },
+    });
+
+    if (error) {
+      toast.error(`Error: ${error.message}`);
+      console.error(error);
+    } else {
+      toast.success('Paciente creado correctamente');
+      setDialogOpen(false);
+      setNewPatient({ email: '', password: '', fullName: '' });
+      setTimeout(fetchPatients, 1000);
+    }
+    setCreating(false);
+  };
 
   const updatePatientStatus = async (patientId: string, newStatus: string) => {
     const { error } = await supabase
@@ -102,13 +148,12 @@ export default function AdminPacientes() {
             Gestión de accesos y estados ({patients.length} pacientes)
           </p>
         </div>
-        <Button variant="wellness">
+        <Button variant="wellness" onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           Nuevo paciente
         </Button>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
@@ -119,7 +164,6 @@ export default function AdminPacientes() {
         />
       </div>
 
-      {/* Patient List */}
       <Card wellness>
         <CardContent className="p-0">
           {loading ? (
@@ -207,6 +251,54 @@ export default function AdminPacientes() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nuevo Paciente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Nombre completo</Label>
+              <Input
+                id="fullName"
+                placeholder="Juan Pérez"
+                value={newPatient.fullName}
+                onChange={(e) => setNewPatient({ ...newPatient, fullName: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="paciente@email.com"
+                value={newPatient.email}
+                onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña *</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={newPatient.password}
+                onChange={(e) => setNewPatient({ ...newPatient, password: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={createPatient} disabled={creating}>
+              {creating && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Crear paciente
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
