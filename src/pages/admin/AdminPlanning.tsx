@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Upload, Trash2, Loader2, Download, User } from 'lucide-react';
+import { FileText, Upload, Trash2, Loader2, Download, User, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,11 @@ export default function AdminPlanning() {
   const [uploadTitle, setUploadTitle] = useState('');
   const [uploadDescription, setUploadDescription] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  
+  // Preview dialog state
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState('');
 
   useEffect(() => {
     fetchPatients();
@@ -179,6 +184,28 @@ export default function AdminPlanning() {
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const viewDocument = async (doc: PlanningDocument) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('planning-files')
+        .download(doc.file_url);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      setPreviewUrl(url);
+      setPreviewTitle(doc.title);
+      setPreviewDialogOpen(true);
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo abrir el documento",
+        variant: "destructive",
+      });
     }
   };
 
@@ -397,6 +424,14 @@ export default function AdminPlanning() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        onClick={() => viewDocument(doc)}
+                        title="Ver"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => downloadDocument(doc)}
                         title="Descargar"
                       >
@@ -419,6 +454,28 @@ export default function AdminPlanning() {
           </CardContent>
         </Card>
       )}
+
+      {/* Preview Dialog */}
+      <Dialog open={previewDialogOpen} onOpenChange={(open) => {
+        setPreviewDialogOpen(open);
+        if (!open && previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          setPreviewUrl(null);
+        }
+      }}>
+        <DialogContent className="max-w-4xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>{previewTitle}</DialogTitle>
+          </DialogHeader>
+          {previewUrl && (
+            <iframe
+              src={previewUrl}
+              className="w-full h-full rounded-lg"
+              title="Vista previa del documento"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

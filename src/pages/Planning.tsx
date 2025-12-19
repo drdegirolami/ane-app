@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Loader2 } from 'lucide-react';
+import { FileText, Download, Loader2, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import AppLayout from '@/components/layout/AppLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +22,9 @@ export default function Planning() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<PlanningDocument[]>([]);
+  const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState('');
 
   useEffect(() => {
     fetchDocuments();
@@ -48,6 +52,28 @@ export default function Planning() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const viewDocument = async (doc: PlanningDocument) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('planning-files')
+        .download(doc.file_url);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      setPreviewUrl(url);
+      setPreviewTitle(doc.title);
+      setPreviewDialogOpen(true);
+    } catch (error) {
+      console.error('Error viewing document:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo abrir el documento",
+        variant: "destructive",
+      });
     }
   };
 
@@ -135,14 +161,24 @@ export default function Planning() {
                           </p>
                         </div>
                       </div>
-                      <Button
-                        variant="wellness"
-                        size="sm"
-                        onClick={() => downloadDocument(doc)}
-                      >
-                        <Download className="h-4 w-4" />
-                        Descargar
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => viewDocument(doc)}
+                          title="Ver"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => downloadDocument(doc)}
+                          title="Descargar"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -150,6 +186,28 @@ export default function Planning() {
             </>
           )}
         </section>
+
+        {/* Preview Dialog */}
+        <Dialog open={previewDialogOpen} onOpenChange={(open) => {
+          setPreviewDialogOpen(open);
+          if (!open && previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+          }
+        }}>
+          <DialogContent className="max-w-4xl h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>{previewTitle}</DialogTitle>
+            </DialogHeader>
+            {previewUrl && (
+              <iframe
+                src={previewUrl}
+                className="w-full h-full rounded-lg"
+                title="Vista previa del documento"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
