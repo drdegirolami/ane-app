@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, ClipboardList, AlertTriangle, MessageCircle, Info, Settings, Moon, Sun } from 'lucide-react';
+import { Home, Calendar, ClipboardList, AlertTriangle, MessageCircle, Info, Settings, Moon, Sun, Shield } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ const navItems = [
 export default function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
   const { mode, toggleMode } = useTheme();
+  const { isAdmin } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,6 +39,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </Link>
 
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Link to="/admin">
+                <Button variant="outline" size="sm" className="rounded-xl gap-2 text-primary border-primary/30 hover:bg-primary/10">
+                  <Shield className="h-4 w-4" />
+                  <span className="hidden sm:inline">Panel Admin</span>
+                </Button>
+              </Link>
+            )}
             <Button
               variant="ghost"
               size="icon"
