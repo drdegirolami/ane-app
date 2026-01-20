@@ -58,6 +58,22 @@ export default function Index() {
           </p>
         </section>
 
+        {/* Next Step CTA - Placeholder */}
+        <section className="animate-slide-up">
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-5">
+              <div className="space-y-2">
+                <h3 className="font-display font-semibold text-foreground">
+                  ¿Qué sigue ahora?
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Tu próximo paso aparecerá aquí.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         {/* Menu Cards */}
         <section className="space-y-4">
           {menuItems.map((item, index) => (
