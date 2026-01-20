@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, FileQuestion, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Loader2, FileQuestion, CheckCircle2, Lock } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useFormTemplateBySlug, FormSchema } from '@/hooks/useFormTemplates';
 import { useMyFormResponse, useUpsertMyFormResponse } from '@/hooks/useFormResponse';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import DynamicForm from '@/components/forms/DynamicForm';
+import FormReadOnly from '@/components/forms/FormReadOnly';
 import { toast } from 'sonner';
+
+// Slugs that are locked after first submission (read-only, no edits)
+const LOCKED_SLUGS = ['baseline_0_2'];
 
 export default function EvaluacionDetalle() {
   const { slug } = useParams<{ slug: string }>();
@@ -23,6 +27,10 @@ export default function EvaluacionDetalle() {
   const schema = template?.schema_json as unknown as FormSchema | null;
 
   const isLoading = loadingTemplate || (template && loadingResponse);
+
+  // Check if this evaluation is locked (baseline)
+  const isLockedSlug = LOCKED_SLUGS.includes(slug ?? '');
+  const isLockedAndCompleted = isLockedSlug && !!existingResponse;
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     if (!template) return;
@@ -109,8 +117,8 @@ export default function EvaluacionDetalle() {
           </Card>
         )}
 
-        {/* Template content - Form */}
-        {!isLoading && !templateError && template && schema && !savedSuccessfully && (
+        {/* LOCKED: Read-only view for baseline evaluations already completed */}
+        {!isLoading && !templateError && template && schema && !savedSuccessfully && isLockedAndCompleted && (
           <>
             {/* Header */}
             <div className="space-y-2">
@@ -120,8 +128,46 @@ export default function EvaluacionDetalle() {
               )}
             </div>
 
-            {/* Already completed notice */}
-            {existingResponse && (
+            {/* Locked message */}
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/50 border border-border">
+              <Lock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-foreground">
+                  Tu punto de partida
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Esto queda como tu punto de partida. No es para juzgarte: es para medir progreso.
+                </p>
+              </div>
+            </div>
+
+            {/* Read-only form */}
+            <FormReadOnly schema={schema} answers={initialValues ?? {}} />
+
+            {/* Back button */}
+            <div className="pt-4">
+              <Link to="/evaluaciones">
+                <Button variant="outline" className="w-full sm:w-auto">
+                  Volver a Evaluaciones
+                </Button>
+              </Link>
+            </div>
+          </>
+        )}
+
+        {/* EDITABLE: Template content - Form (for non-locked or not yet completed) */}
+        {!isLoading && !templateError && template && schema && !savedSuccessfully && !isLockedAndCompleted && (
+          <>
+            {/* Header */}
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold text-foreground">{template.title}</h1>
+              {template.description && (
+                <p className="text-muted-foreground">{template.description}</p>
+              )}
+            </div>
+
+            {/* Already completed notice (for editable evaluations) */}
+            {existingResponse && !isLockedSlug && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 <span>Ya completaste esta evaluación. Podés editar tus respuestas.</span>
