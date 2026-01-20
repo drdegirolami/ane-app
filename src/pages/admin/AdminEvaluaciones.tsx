@@ -20,11 +20,15 @@ const BASELINE_SLUG = 'baseline_0_2';
 
 export default function AdminEvaluaciones() {
   const { data: template, isLoading: loadingTemplate } = useFormTemplateBySlug(BASELINE_SLUG);
+  
+  // Only fetch patients when we have a valid template.id
+  const templateId = template?.id;
   const { data: patientsWithResponses, isLoading: loadingPatients } = useAdminPatientsWithResponses(
-    template?.id ?? ''
+    templateId ?? ''
   );
 
-  const isLoading = loadingTemplate || (template && loadingPatients);
+  // Show loading while fetching template, or while fetching patients (only if template exists)
+  const isLoading = loadingTemplate || (!!templateId && loadingPatients);
 
   const completedCount = patientsWithResponses?.filter((p) => p.response !== null).length ?? 0;
   const totalCount = patientsWithResponses?.length ?? 0;
