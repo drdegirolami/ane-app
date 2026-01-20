@@ -14,10 +14,11 @@ export function useAdminPatientsWithResponses(templateId: string) {
   return useQuery<PatientWithResponse[], Error>({
     queryKey: ['admin-patients-responses', templateId],
     queryFn: async () => {
-      // Fetch all patient profiles
+      // Fetch only necessary fields from profiles
+      // IMPORTANT: user_id is the auth user identifier, NOT id
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, full_name, email, status')
         .order('full_name', { ascending: true });
 
       if (profilesError) {
@@ -28,10 +29,10 @@ export function useAdminPatientsWithResponses(templateId: string) {
         return [];
       }
 
-      // Fetch all responses for this template
+      // Fetch only necessary fields from responses for this template
       const { data: responses, error: responsesError } = await supabase
         .from('form_responses')
-        .select('*')
+        .select('patient_id, submitted_at, updated_at')
         .eq('template_id', templateId);
 
       if (responsesError) {
@@ -39,15 +40,16 @@ export function useAdminPatientsWithResponses(templateId: string) {
       }
 
       // Map responses by patient_id for quick lookup
-      const responseMap = new Map<string, FormResponse>();
+      // patient_id in form_responses matches user_id in profiles
+      const responseMap = new Map<string, Pick<FormResponse, 'patient_id' | 'submitted_at' | 'updated_at'>>();
       responses?.forEach((r) => {
         responseMap.set(r.patient_id, r);
       });
 
-      // Combine profiles with their responses
+      // Combine profiles with their responses using user_id (NOT id)
       return profiles.map((profile) => ({
-        profile,
-        response: responseMap.get(profile.user_id) || null,
+        profile: profile as Profile,
+        response: (responseMap.get(profile.user_id) as FormResponse) || null,
       }));
     },
     enabled: !!templateId,
