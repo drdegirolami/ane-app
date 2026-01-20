@@ -2,12 +2,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, HelpCircle } from 'lucide-react';
-import { FormSchema, FormField as FormFieldType } from '@/hooks/useFormTemplates';
+import { FormSchema, FormField as FormFieldType } from '@/types/forms';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -25,6 +27,7 @@ interface DynamicFormProps {
 }
 
 // Build Zod schema dynamically from FormSchema
+// Tipos guardados: text/textarea -> string, number -> number, radio -> string, checkbox -> string[]
 function buildZodSchema(schema: FormSchema) {
   const shape: Record<string, z.ZodTypeAny> = {};
 
@@ -46,6 +49,16 @@ function buildZodSchema(schema: FormSchema) {
               message: 'Este campo es obligatorio',
             });
           }
+          break;
+        case 'radio':
+          fieldSchema = field.required
+            ? z.string().min(1, 'Seleccioná una opción')
+            : z.string().optional();
+          break;
+        case 'checkbox':
+          fieldSchema = field.required
+            ? z.array(z.string()).min(1, 'Seleccioná al menos una opción')
+            : z.array(z.string()).default([]);
           break;
         case 'text':
         case 'textarea':
@@ -77,11 +90,25 @@ export default function DynamicForm({
 }: DynamicFormProps) {
   const zodSchema = buildZodSchema(schema);
   
-  // Build default values
+  // Build default values with correct types
   const allFields = getAllFields(schema);
   const defaultValues: Record<string, unknown> = {};
   allFields.forEach((field) => {
-    defaultValues[field.key] = initialValues[field.key] ?? (field.type === 'number' ? '' : '');
+    if (initialValues[field.key] !== undefined) {
+      defaultValues[field.key] = initialValues[field.key];
+    } else {
+      // Default values by type
+      switch (field.type) {
+        case 'checkbox':
+          defaultValues[field.key] = [];
+          break;
+        case 'number':
+          defaultValues[field.key] = '';
+          break;
+        default:
+          defaultValues[field.key] = '';
+      }
+    }
   });
 
   const form = useForm({
@@ -147,6 +174,55 @@ export default function DynamicForm({
                             placeholder="0"
                             inputMode="decimal"
                           />
+                        ) : field.type === 'radio' && field.options ? (
+                          <RadioGroup
+                            value={formField.value as string ?? ''}
+                            onValueChange={formField.onChange}
+                            className="space-y-2"
+                          >
+                            {field.options.map((option) => (
+                              <div key={option.value} className="flex items-center space-x-3">
+                                <RadioGroupItem 
+                                  value={option.value} 
+                                  id={`${field.key}-${option.value}`} 
+                                />
+                                <Label 
+                                  htmlFor={`${field.key}-${option.value}`} 
+                                  className="font-normal cursor-pointer"
+                                >
+                                  {option.label}
+                                </Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        ) : field.type === 'checkbox' && field.options ? (
+                          <div className="space-y-2">
+                            {field.options.map((option) => {
+                              const values = (formField.value as string[]) || [];
+                              const isChecked = values.includes(option.value);
+                              
+                              return (
+                                <div key={option.value} className="flex items-center space-x-3">
+                                  <Checkbox
+                                    id={`${field.key}-${option.value}`}
+                                    checked={isChecked}
+                                    onCheckedChange={(checked) => {
+                                      const newValues = checked
+                                        ? [...values, option.value]
+                                        : values.filter((v) => v !== option.value);
+                                      formField.onChange(newValues);
+                                    }}
+                                  />
+                                  <Label 
+                                    htmlFor={`${field.key}-${option.value}`} 
+                                    className="font-normal cursor-pointer"
+                                  >
+                                    {option.label}
+                                  </Label>
+                                </div>
+                              );
+                            })}
+                          </div>
                         ) : (
                           <Input
                             {...formField}

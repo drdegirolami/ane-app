@@ -2,33 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 
+// Re-exportar tipos desde el archivo compartido
+export type { FormField, FormSection, FormSchema, FormFieldOption } from '@/types/forms';
+
 export type FormTemplate = Database['public']['Tables']['form_templates']['Row'];
-
-// Schema types for type-safe rendering
-export interface FormField {
-  key: string;
-  label: string;
-  helpText?: string;
-  type: 'text' | 'textarea' | 'number';
-  required: boolean;
-}
-
-export interface FormSection {
-  title: string;
-  description?: string;
-  fields: FormField[];
-}
-
-export interface FormSchema {
-  version: number;
-  sections: FormSection[];
-  success: {
-    title: string;
-    message: string;
-    primaryCtaLabel: string;
-    primaryCtaTo: string;
-  };
-}
 
 export function useFormTemplates() {
   return useQuery<FormTemplate[], Error>({
