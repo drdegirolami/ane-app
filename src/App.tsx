@@ -17,6 +17,7 @@ import Info from "./pages/Info";
 import Ajustes from "./pages/Ajustes";
 import Evaluaciones from "./pages/Evaluaciones";
 import EvaluacionDetalle from "./pages/EvaluacionDetalle";
+import EvaluacionInicial from "./pages/EvaluacionInicial";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/ajustes" element={<ProtectedRoute><Ajustes /></ProtectedRoute>} />
               <Route path="/evaluaciones" element={<ProtectedRoute><Evaluaciones /></ProtectedRoute>} />
               <Route path="/evaluaciones/:slug" element={<ProtectedRoute><EvaluacionDetalle /></ProtectedRoute>} />
+              <Route path="/evaluacion-inicial" element={<ProtectedRoute><EvaluacionInicial /></ProtectedRoute>} />
               
               {/* Admin Routes - Protected + Admin Only */}
               <Route path="/admin" element={
