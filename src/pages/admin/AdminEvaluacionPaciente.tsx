@@ -3,10 +3,11 @@ import { ArrowLeft, Loader2, FileQuestion, User } from 'lucide-react';
 import { useFormTemplateBySlug, FormSchema } from '@/hooks/useFormTemplates';
 import { useAdminPatientResponse, useAdminPatientProfile } from '@/hooks/useAdminEvaluaciones';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import FormReadOnly from '@/components/forms/FormReadOnly';
 
 export default function AdminEvaluacionPaciente() {
   const { slug, patientId } = useParams<{ slug: string; patientId: string }>();
@@ -22,19 +23,6 @@ export default function AdminEvaluacionPaciente() {
   const answers = response?.answers_json as Record<string, unknown> | null;
 
   const isLoading = loadingTemplate || loadingProfile || (template && loadingResponse);
-
-  const getDisplayValue = (value: unknown): string => {
-    if (value === null || value === undefined || value === '') {
-      return '—';
-    }
-    if (typeof value === 'number') {
-      return value.toString();
-    }
-    if (typeof value === 'string') {
-      return value;
-    }
-    return JSON.stringify(value);
-  };
 
   return (
     <div className="p-6 space-y-6">
@@ -119,7 +107,7 @@ export default function AdminEvaluacionPaciente() {
           {response && answers && (
             <>
               {/* Submission info */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                 <span>Enviado el</span>
                 <Badge variant="outline">
                   {format(new Date(response.submitted_at), "d 'de' MMMM yyyy, HH:mm", { locale: es })}
@@ -134,31 +122,8 @@ export default function AdminEvaluacionPaciente() {
                 )}
               </div>
 
-              {/* Sections */}
-              <div className="space-y-6">
-                {schema.sections.map((section, sectionIndex) => (
-                  <Card key={sectionIndex}>
-                    <CardHeader>
-                      <CardTitle className="text-lg">{section.title}</CardTitle>
-                      {section.description && (
-                        <CardDescription>{section.description}</CardDescription>
-                      )}
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {section.fields.map((field) => (
-                        <div key={field.key} className="space-y-1">
-                          <p className="text-sm font-medium text-muted-foreground">
-                            {field.label}
-                          </p>
-                          <p className="text-foreground whitespace-pre-wrap">
-                            {getDisplayValue(answers[field.key])}
-                          </p>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {/* Reusable read-only form */}
+              <FormReadOnly schema={schema} answers={answers} />
             </>
           )}
         </>
