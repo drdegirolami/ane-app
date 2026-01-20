@@ -83,21 +83,26 @@ export default function EvaluacionDetalle() {
         )}
 
         {/* Success state after saving */}
-        {savedSuccessfully && schema && (
+        {savedSuccessfully && (
           <Card wellness className="text-center">
             <CardHeader>
               <div className="mx-auto mb-4">
                 <CheckCircle2 className="h-12 w-12 text-primary" />
               </div>
-              <CardTitle>{schema.success.title}</CardTitle>
+              <CardTitle>{schema?.success?.title || '¡Listo!'}</CardTitle>
               <CardDescription className="text-base">
-                {schema.success.message}
+                {schema?.success?.message || 'Tu evaluación fue guardada correctamente.'}
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Link to={schema.success.primaryCtaTo}>
+            <CardContent className="space-y-3">
+              <Link to={schema?.success?.primaryCtaTo || '/evaluaciones'}>
                 <Button size="lg" className="w-full">
-                  {schema.success.primaryCtaLabel}
+                  {schema?.success?.primaryCtaLabel || 'Volver a Evaluaciones'}
+                </Button>
+              </Link>
+              <Link to="/">
+                <Button variant="outline" size="lg" className="w-full">
+                  Ir a Inicio
                 </Button>
               </Link>
             </CardContent>
