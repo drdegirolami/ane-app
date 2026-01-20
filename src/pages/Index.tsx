@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Calendar, ClipboardList, AlertTriangle, MessageCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import AppLayout from '@/components/layout/AppLayout';
 import { useMyNextStep } from '@/hooks/useMyNextStep';
-
+import { useAuth } from '@/hooks/useAuth';
 const menuItems = [
   {
     path: '/planning',
@@ -38,7 +37,10 @@ const menuItems = [
 
 export default function Index() {
   const { data: nextStep, isLoading } = useMyNextStep();
-
+  const { user } = useAuth();
+  
+  const userName = user?.user_metadata?.full_name || 'Usuario';
+  const userEmail = user?.email || '';
   return (
     <AppLayout>
       <div className="max-w-lg mx-auto space-y-8">
@@ -59,6 +61,18 @@ export default function Index() {
               No buscamos perfección, buscamos continuidad.
             </span>
           </p>
+        </section>
+
+        {/* User Info */}
+        <section className="text-center animate-fade-in">
+          <div className="inline-flex flex-col items-center gap-1 px-4 py-3 rounded-xl bg-muted/50 border border-border">
+            <span className="text-sm font-medium text-foreground">
+              {userName}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {userEmail}
+            </span>
+          </div>
         </section>
 
         {/* Next Step CTA */}
