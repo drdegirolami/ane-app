@@ -144,14 +144,27 @@ export default function EvaluacionDetalle() {
             {/* Read-only form */}
             <FormReadOnly schema={schema} answers={initialValues ?? {}} />
 
-            {/* Back button */}
-            <div className="pt-4">
-              <Link to="/evaluaciones">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  Volver a Evaluaciones
-                </Button>
-              </Link>
-            </div>
+            {/* CTA: What's next */}
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="text-lg">¿Qué sigue ahora?</CardTitle>
+                <CardDescription className="text-base">
+                  En la próxima clase vamos a ordenar tu semana para que esto sea sostenible, sin perfeccionismo.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col sm:flex-row gap-3">
+                <Link to="/planning" className="flex-1">
+                  <Button size="lg" className="w-full">
+                    Ir a la próxima clase
+                  </Button>
+                </Link>
+                <Link to="/evaluaciones" className="flex-1">
+                  <Button variant="outline" size="lg" className="w-full">
+                    Volver a Evaluaciones
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </>
         )}
 
