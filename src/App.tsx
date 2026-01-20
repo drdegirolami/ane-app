@@ -29,6 +29,7 @@ import AdminPlanning from "./pages/admin/AdminPlanning";
 import AdminMensajes from "./pages/admin/AdminMensajes";
 import AdminSituaciones from "./pages/admin/AdminSituaciones";
 import AdminEvaluaciones from "./pages/admin/AdminEvaluaciones";
+import AdminEvaluacionPaciente from "./pages/admin/AdminEvaluacionPaciente";
 import AdminAjustes from "./pages/admin/AdminAjustes";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="mensajes" element={<AdminMensajes />} />
                 <Route path="situaciones" element={<AdminSituaciones />} />
                 <Route path="evaluaciones" element={<AdminEvaluaciones />} />
+                <Route path="evaluaciones/:slug/:patientId" element={<AdminEvaluacionPaciente />} />
                 <Route path="ajustes" element={<AdminAjustes />} />
               </Route>
               
