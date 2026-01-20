@@ -5,6 +5,29 @@ import type { Database } from '@/integrations/supabase/types';
 
 type FormResponse = Database['public']['Tables']['form_responses']['Row'];
 
+export function useMyFormResponses() {
+  const { user } = useAuth();
+
+  return useQuery<{ template_id: string }[], Error>({
+    queryKey: ['form-responses', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+
+      const { data, error } = await supabase
+        .from('form_responses')
+        .select('template_id')
+        .eq('patient_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+}
+
 export function useMyFormResponse(templateId: string) {
   const { user } = useAuth();
 

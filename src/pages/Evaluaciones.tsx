@@ -1,12 +1,17 @@
 import { Link } from 'react-router-dom';
-import { ClipboardList, ArrowRight, Loader2 } from 'lucide-react';
+import { ClipboardList, ArrowRight, Check, Loader2 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useFormTemplates } from '@/hooks/useFormTemplates';
+import { useMyFormResponses } from '@/hooks/useFormResponse';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 export default function Evaluaciones() {
   const { data: templates, isLoading, error } = useFormTemplates();
+  const { data: responses } = useMyFormResponses();
+
+  const completedTemplateIds = new Set(responses?.map((r) => r.template_id) || []);
 
   return (
     <AppLayout>
@@ -39,24 +44,48 @@ export default function Evaluaciones() {
 
         {!isLoading && !error && templates && templates.length > 0 && (
           <div className="grid gap-4">
-            {templates.map((template) => (
-              <Card key={template.id} wellness className="hover:scale-[1.01] transition-transform">
-                <CardHeader>
-                  <CardTitle>{template.title}</CardTitle>
-                  {template.description && (
-                    <CardDescription>{template.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardFooter>
-                  <Link to={`/evaluaciones/${template.slug}`} className="ml-auto">
-                    <Button variant="default" size="sm" className="gap-2">
-                      Ver
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
-            ))}
+            {templates.map((template) => {
+              const isCompleted = completedTemplateIds.has(template.id);
+
+              return (
+                <Card key={template.id} wellness className="hover:scale-[1.01] transition-transform">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <CardTitle>{template.title}</CardTitle>
+                        {template.description && (
+                          <CardDescription>{template.description}</CardDescription>
+                        )}
+                      </div>
+                      <Badge
+                        variant={isCompleted ? 'default' : 'secondary'}
+                        className={isCompleted 
+                          ? 'bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20' 
+                          : 'bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20'
+                        }
+                      >
+                        {isCompleted ? (
+                          <>
+                            <Check className="h-3 w-3 mr-1" />
+                            Completado
+                          </>
+                        ) : (
+                          'Pendiente'
+                        )}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardFooter>
+                    <Link to={`/evaluaciones/${template.slug}`} className="ml-auto">
+                      <Button variant="default" size="sm" className="gap-2">
+                        {isCompleted ? 'Ver' : 'Completar'}
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
