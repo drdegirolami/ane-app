@@ -144,27 +144,45 @@ export default function EvaluacionDetalle() {
             {/* Read-only form */}
             <FormReadOnly schema={schema} answers={initialValues ?? {}} />
 
-            {/* CTA: What's next */}
-            <Card className="bg-primary/5 border-primary/20">
-              <CardHeader>
-                <CardTitle className="text-lg">¿Qué sigue ahora?</CardTitle>
-                <CardDescription className="text-base">
-                  En la próxima clase vamos a ordenar tu semana para que esto sea sostenible, sin perfeccionismo.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col sm:flex-row gap-3">
-                <Link to="/planning" className="flex-1">
-                  <Button size="lg" className="w-full">
-                    Ir a la próxima clase
-                  </Button>
-                </Link>
-                <Link to="/evaluaciones" className="flex-1">
-                  <Button variant="outline" size="lg" className="w-full">
-                    Volver a Evaluaciones
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            {/* CTA: What's next - conditional based on drip availability */}
+            {(() => {
+              // TODO: Replace with real drip logic from backend
+              const nextStep = {
+                available: false,
+                title: 'Tu próxima clase',
+                message: 'Se habilita pronto. Te va a llegar un correo cuando esté lista.',
+                ctaLabel: 'Volver a Inicio',
+                ctaTo: '/',
+              };
+
+              return (
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="text-lg">¿Qué sigue ahora?</CardTitle>
+                    <CardDescription className="text-base">
+                      {nextStep.available
+                        ? 'En la próxima clase vamos a ordenar tu semana para que esto sea sostenible, sin perfeccionismo.'
+                        : nextStep.message}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col sm:flex-row gap-3">
+                    {nextStep.available ? (
+                      <Link to={nextStep.ctaTo} className="flex-1">
+                        <Button size="lg" className="w-full">
+                          {nextStep.ctaLabel}
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/evaluaciones" className="flex-1">
+                        <Button variant="outline" size="lg" className="w-full">
+                          Volver a Evaluaciones
+                        </Button>
+                      </Link>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
           </>
         )}
 
