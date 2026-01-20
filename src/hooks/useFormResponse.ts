@@ -30,19 +30,19 @@ export function useMyFormResponse(templateId: string) {
   });
 }
 
-interface UpsertFormResponseParams {
+type UpsertArgs = {
   templateId: string;
   answersJson: Record<string, unknown>;
-}
+};
 
 export function useUpsertMyFormResponse() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async ({ templateId, answersJson }: UpsertFormResponseParams) => {
+  return useMutation<FormResponse, Error, UpsertArgs>({
+    mutationFn: async ({ templateId, answersJson }: UpsertArgs) => {
       if (!user?.id) {
-        throw new Error('Usuario no autenticado');
+        throw new Error('Not authenticated');
       }
 
       const payload = {
@@ -66,9 +66,14 @@ export function useUpsertMyFormResponse() {
 
       return data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
+      // Invalidate the specific response query
       queryClient.invalidateQueries({
         queryKey: ['form-response', variables.templateId, user?.id],
+      });
+      // Invalidate templates list (for showing pending/completed status)
+      queryClient.invalidateQueries({
+        queryKey: ['form-templates', 'active'],
       });
     },
   });
