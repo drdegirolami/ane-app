@@ -3,6 +3,7 @@ import { Calendar, ClipboardList, AlertTriangle, MessageCircle, ArrowRight, Spar
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/components/layout/AppLayout';
+import { useMyNextStep } from '@/hooks/useMyNextStep';
 
 const menuItems = [
   {
@@ -36,6 +37,8 @@ const menuItems = [
 ];
 
 export default function Index() {
+  const { data: nextStep, isLoading } = useMyNextStep();
+
   return (
     <AppLayout>
       <div className="max-w-lg mx-auto space-y-8">
@@ -58,7 +61,7 @@ export default function Index() {
           </p>
         </section>
 
-        {/* Next Step CTA - Placeholder */}
+        {/* Next Step CTA */}
         <section className="animate-slide-up">
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="p-5">
@@ -67,7 +70,12 @@ export default function Index() {
                   ¿Qué sigue ahora?
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Tu próximo paso aparecerá aquí.
+                  {isLoading 
+                    ? 'Verificando tu próximo paso…'
+                    : nextStep?.available 
+                      ? nextStep.next_step_title
+                      : 'Tu próximo paso aparecerá aquí.'
+                  }
                 </p>
               </div>
             </CardContent>
