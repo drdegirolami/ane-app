@@ -152,7 +152,7 @@ export default function EvaluacionDetalle() {
                 <CardTitle className="text-lg">¿Qué sigue ahora?</CardTitle>
                 <CardDescription className="text-base">
                   {nextStepLoading ? (
-                    'Cargando...'
+                    'Verificando tu próxima clase…'
                   ) : nextStepData?.available ? (
                     `En la próxima clase: ${nextStepData.next_step_title}`
                   ) : (
@@ -162,11 +162,16 @@ export default function EvaluacionDetalle() {
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row gap-3">
                 {nextStepData?.available ? (
-                  <Link to={nextStepData.next_step_url} className="flex-1">
-                    <Button size="lg" className="w-full">
+                  <div className="flex-1 space-y-2">
+                    <Link to={nextStepData.next_step_url}>
+                      <Button size="lg" className="w-full">
+                        Continuar
+                      </Button>
+                    </Link>
+                    <p className="text-sm text-muted-foreground text-center">
                       {nextStepData.next_step_title}
-                    </Button>
-                  </Link>
+                    </p>
+                  </div>
                 ) : (
                   <Link to="/evaluaciones" className="flex-1">
                     <Button variant="outline" size="lg" className="w-full">
