@@ -1,21 +1,47 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, FileQuestion, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, FileQuestion, CheckCircle2 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useFormTemplateBySlug, FormSchema } from '@/hooks/useFormTemplates';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { useMyFormResponse, useUpsertMyFormResponse } from '@/hooks/useFormResponse';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import DynamicForm from '@/components/forms/DynamicForm';
 import { toast } from 'sonner';
 
 export default function EvaluacionDetalle() {
   const { slug } = useParams<{ slug: string }>();
-  const { data: template, isLoading, error } = useFormTemplateBySlug(slug ?? '');
-
-  const handleComenzar = () => {
-    toast.info('Próximamente podrás completar esta evaluación');
-  };
+  const { data: template, isLoading: loadingTemplate, error: templateError } = useFormTemplateBySlug(slug ?? '');
+  
+  const templateId = template?.id ?? '';
+  const { data: existingResponse, isLoading: loadingResponse } = useMyFormResponse(templateId);
+  
+  const upsertMutation = useUpsertMyFormResponse();
+  const [savedSuccessfully, setSavedSuccessfully] = useState(false);
 
   // Parse schema safely
   const schema = template?.schema_json as unknown as FormSchema | null;
+
+  const isLoading = loadingTemplate || (template && loadingResponse);
+
+  const handleSubmit = async (values: Record<string, unknown>) => {
+    if (!template) return;
+
+    try {
+      await upsertMutation.mutateAsync({
+        templateId: template.id,
+        answersJson: values,
+      });
+      setSavedSuccessfully(true);
+      toast.success('¡Evaluación guardada correctamente!');
+    } catch (error) {
+      console.error('Error saving response:', error);
+      toast.error('Error al guardar la evaluación');
+    }
+  };
+
+  // Get initial values from existing response
+  const initialValues = existingResponse?.answers_json as Record<string, unknown> | undefined;
 
   return (
     <AppLayout>
@@ -37,14 +63,14 @@ export default function EvaluacionDetalle() {
         )}
 
         {/* Error state */}
-        {error && (
+        {templateError && (
           <div className="text-center py-12">
             <p className="text-destructive">Error al cargar la evaluación</p>
           </div>
         )}
 
         {/* Not found state */}
-        {!isLoading && !error && !template && (
+        {!isLoading && !templateError && !template && (
           <div className="text-center py-12">
             <FileQuestion className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">Evaluación no encontrada</p>
@@ -56,8 +82,30 @@ export default function EvaluacionDetalle() {
           </div>
         )}
 
-        {/* Template content */}
-        {!isLoading && !error && template && schema && (
+        {/* Success state after saving */}
+        {savedSuccessfully && schema && (
+          <Card wellness className="text-center">
+            <CardHeader>
+              <div className="mx-auto mb-4">
+                <CheckCircle2 className="h-12 w-12 text-primary" />
+              </div>
+              <CardTitle>{schema.success.title}</CardTitle>
+              <CardDescription className="text-base">
+                {schema.success.message}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link to={schema.success.primaryCtaTo}>
+                <Button size="lg" className="w-full">
+                  {schema.success.primaryCtaLabel}
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Template content - Form */}
+        {!isLoading && !templateError && template && schema && !savedSuccessfully && (
           <>
             {/* Header */}
             <div className="space-y-2">
@@ -67,53 +115,22 @@ export default function EvaluacionDetalle() {
               )}
             </div>
 
-            {/* Sections preview */}
-            <div className="space-y-4">
-              {schema.sections.map((section, sectionIndex) => (
-                <Card key={sectionIndex} wellness>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{section.title}</CardTitle>
-                    {section.description && (
-                      <CardDescription>{section.description}</CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {section.fields.map((field, fieldIndex) => (
-                      <div 
-                        key={field.key} 
-                        className="p-3 rounded-lg bg-muted/50 space-y-1"
-                      >
-                        <div className="flex items-start gap-2">
-                          <span className="text-sm font-medium text-foreground">
-                            {fieldIndex + 1}. {field.label}
-                          </span>
-                          {field.required && (
-                            <span className="text-xs text-destructive">*</span>
-                          )}
-                        </div>
-                        {field.helpText && (
-                          <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                            <HelpCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                            <span>{field.helpText}</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {/* Already completed notice */}
+            {existingResponse && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>Ya completaste esta evaluación. Podés editar tus respuestas.</span>
+              </div>
+            )}
 
-            {/* CTA Button */}
-            <div className="pt-4">
-              <Button 
-                onClick={handleComenzar} 
-                size="lg" 
-                className="w-full"
-              >
-                Comenzar
-              </Button>
-            </div>
+            {/* Dynamic Form */}
+            <DynamicForm
+              templateId={template.id}
+              schema={schema}
+              initialValues={initialValues}
+              onSubmit={handleSubmit}
+              isSubmitting={upsertMutation.isPending}
+            />
           </>
         )}
       </div>
