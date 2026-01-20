@@ -223,6 +223,36 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_next_steps: {
+        Row: {
+          available: boolean
+          available_from: string | null
+          next_step_slug: string
+          next_step_title: string
+          next_step_url: string
+          patient_id: string
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean
+          available_from?: string | null
+          next_step_slug: string
+          next_step_title: string
+          next_step_url: string
+          patient_id: string
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean
+          available_from?: string | null
+          next_step_slug?: string
+          next_step_title?: string
+          next_step_url?: string
+          patient_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       patient_planning: {
         Row: {
           description: string | null
