@@ -15,6 +15,8 @@ import Situaciones from "./pages/Situaciones";
 import Mensaje from "./pages/Mensaje";
 import Info from "./pages/Info";
 import Ajustes from "./pages/Ajustes";
+import Evaluaciones from "./pages/Evaluaciones";
+import EvaluacionDetalle from "./pages/EvaluacionDetalle";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +28,7 @@ import AdminContenidos from "./pages/admin/AdminContenidos";
 import AdminPlanning from "./pages/admin/AdminPlanning";
 import AdminMensajes from "./pages/admin/AdminMensajes";
 import AdminSituaciones from "./pages/admin/AdminSituaciones";
+import AdminEvaluaciones from "./pages/admin/AdminEvaluaciones";
 import AdminAjustes from "./pages/admin/AdminAjustes";
 
 const queryClient = new QueryClient();
@@ -50,6 +53,8 @@ const App = () => (
               <Route path="/mensaje" element={<ProtectedRoute><Mensaje /></ProtectedRoute>} />
               <Route path="/info" element={<ProtectedRoute><Info /></ProtectedRoute>} />
               <Route path="/ajustes" element={<ProtectedRoute><Ajustes /></ProtectedRoute>} />
+              <Route path="/evaluaciones" element={<ProtectedRoute><Evaluaciones /></ProtectedRoute>} />
+              <Route path="/evaluaciones/:slug" element={<ProtectedRoute><EvaluacionDetalle /></ProtectedRoute>} />
               
               {/* Admin Routes - Protected + Admin Only */}
               <Route path="/admin" element={
@@ -63,6 +68,7 @@ const App = () => (
                 <Route path="planning" element={<AdminPlanning />} />
                 <Route path="mensajes" element={<AdminMensajes />} />
                 <Route path="situaciones" element={<AdminSituaciones />} />
+                <Route path="evaluaciones" element={<AdminEvaluaciones />} />
                 <Route path="ajustes" element={<AdminAjustes />} />
               </Route>
               
