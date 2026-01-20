@@ -155,6 +155,74 @@ export type Database = {
         }
         Relationships: []
       }
+      form_responses: {
+        Row: {
+          answers_json: Json
+          id: string
+          patient_id: string
+          submitted_at: string
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          answers_json: Json
+          id?: string
+          patient_id: string
+          submitted_at?: string
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          answers_json?: Json
+          id?: string
+          patient_id?: string
+          submitted_at?: string
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "form_responses_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "form_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      form_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          order_index: number
+          schema_json: Json
+          slug: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          schema_json: Json
+          slug: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          schema_json?: Json
+          slug?: string
+          title?: string
+        }
+        Relationships: []
+      }
       patient_planning: {
         Row: {
           description: string | null
