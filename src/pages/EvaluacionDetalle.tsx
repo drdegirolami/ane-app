@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, FileQuestion, CheckCircle2, Lock } from 'lucide-rea
 import AppLayout from '@/components/layout/AppLayout';
 import { useFormTemplateBySlug, FormSchema } from '@/hooks/useFormTemplates';
 import { useMyFormResponse, useUpsertMyFormResponse } from '@/hooks/useFormResponse';
+import { useMyNextStep } from '@/hooks/useMyNextStep';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import DynamicForm from '@/components/forms/DynamicForm';
@@ -21,6 +22,7 @@ export default function EvaluacionDetalle() {
   const { data: existingResponse, isLoading: loadingResponse } = useMyFormResponse(templateId);
   
   const upsertMutation = useUpsertMyFormResponse();
+  const { data: nextStepData, isLoading: nextStepLoading } = useMyNextStep();
   const [savedSuccessfully, setSavedSuccessfully] = useState(false);
 
   // Parse schema safely
@@ -144,45 +146,36 @@ export default function EvaluacionDetalle() {
             {/* Read-only form */}
             <FormReadOnly schema={schema} answers={initialValues ?? {}} />
 
-            {/* CTA: What's next - conditional based on drip availability */}
-            {(() => {
-              // TODO: Replace with real drip logic from backend
-              const nextStep = {
-                available: false,
-                title: 'Tu próxima clase',
-                message: 'Se habilita pronto. Te va a llegar un correo cuando esté lista.',
-                ctaLabel: 'Volver a Inicio',
-                ctaTo: '/',
-              };
-
-              return (
-                <Card className="bg-primary/5 border-primary/20">
-                  <CardHeader>
-                    <CardTitle className="text-lg">¿Qué sigue ahora?</CardTitle>
-                    <CardDescription className="text-base">
-                      {nextStep.available
-                        ? 'En la próxima clase vamos a ordenar tu semana para que esto sea sostenible, sin perfeccionismo.'
-                        : nextStep.message}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col sm:flex-row gap-3">
-                    {nextStep.available ? (
-                      <Link to={nextStep.ctaTo} className="flex-1">
-                        <Button size="lg" className="w-full">
-                          {nextStep.ctaLabel}
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Link to="/evaluaciones" className="flex-1">
-                        <Button variant="outline" size="lg" className="w-full">
-                          Volver a Evaluaciones
-                        </Button>
-                      </Link>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })()}
+            {/* CTA: What's next - connected to real drip data */}
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="text-lg">¿Qué sigue ahora?</CardTitle>
+                <CardDescription className="text-base">
+                  {nextStepLoading ? (
+                    'Cargando...'
+                  ) : nextStepData?.available ? (
+                    `En la próxima clase: ${nextStepData.next_step_title}`
+                  ) : (
+                    'Se habilita pronto. Te va a llegar un correo cuando esté lista.'
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col sm:flex-row gap-3">
+                {nextStepData?.available ? (
+                  <Link to={nextStepData.next_step_url} className="flex-1">
+                    <Button size="lg" className="w-full">
+                      {nextStepData.next_step_title}
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/evaluaciones" className="flex-1">
+                    <Button variant="outline" size="lg" className="w-full">
+                      Volver a Evaluaciones
+                    </Button>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
           </>
         )}
 
