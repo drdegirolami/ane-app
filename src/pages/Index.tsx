@@ -77,23 +77,41 @@ export default function Index() {
 
         {/* Next Step CTA */}
         <section className="animate-slide-up">
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-5">
-              <div className="space-y-2">
-                <h3 className="font-display font-semibold text-foreground">
-                  ¿Qué sigue ahora?
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {isLoading 
-                    ? 'Verificando tu próximo paso…'
-                    : nextStep?.available 
-                      ? nextStep.next_step_title
+          {nextStep?.available ? (
+            <Link to={nextStep.next_step_url}>
+              <Card className="bg-primary/5 border-primary/20 hover:bg-primary/10 hover:scale-[1.02] cursor-pointer transition-all duration-300 group">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <h3 className="font-display font-semibold text-foreground group-hover:text-primary transition-colors">
+                        ¿Qué sigue ahora?
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {nextStep.next_step_title}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ) : (
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="p-5">
+                <div className="space-y-2">
+                  <h3 className="font-display font-semibold text-foreground">
+                    ¿Qué sigue ahora?
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isLoading 
+                      ? 'Verificando tu próximo paso…'
                       : 'Tu próximo paso aparecerá aquí.'
-                  }
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                    }
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </section>
 
         {/* Menu Cards */}
