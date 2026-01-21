@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Eye, Check, Clock, Users } from 'lucide-react';
-import { useFormTemplateBySlug } from '@/hooks/useFormTemplates';
+import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { useFormTemplates } from '@/hooks/useFormTemplates';
 import { useAdminPatientsWithResponses } from '@/hooks/useAdminEvaluaciones';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,62 +14,61 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import CreateFormDialog from '@/components/forms/CreateFormDialog';
 
-const BASELINE_SLUG = 'baseline_0_2';
-
-export default function AdminEvaluaciones() {
-  const { data: template, isLoading: loadingTemplate } = useFormTemplateBySlug(BASELINE_SLUG);
-  
-  // Only fetch patients when we have a valid template.id
-  const templateId = template?.id;
-  const { data: patientsWithResponses, isLoading: loadingPatients } = useAdminPatientsWithResponses(
-    templateId ?? ''
+// Component for each template's expandable section
+function TemplateSection({ template }: { template: { id: string; slug: string; title: string; description: string | null } }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const { data: patientsWithResponses, isLoading } = useAdminPatientsWithResponses(
+    isOpen ? template.id : ''
   );
-
-  // Show loading while fetching template, or while fetching patients (only if template exists)
-  const isLoading = loadingTemplate || (!!templateId && loadingPatients);
 
   const completedCount = patientsWithResponses?.filter((p) => p.response !== null).length ?? 0;
   const totalCount = patientsWithResponses?.length ?? 0;
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground mb-2">Evaluaciones</h1>
-        <p className="text-muted-foreground">
-          Visualiza las respuestas de los pacientes a las evaluaciones
-        </p>
-      </div>
-
-      {/* Loading state */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      )}
-
-      {/* Template info card */}
-      {!isLoading && template && (
-        <Card>
-          <CardHeader>
+    <Card>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
             <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <CardTitle>{template.title}</CardTitle>
+              <div className="space-y-1 flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">{template.title}</CardTitle>
+                  {isOpen ? (
+                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
                 {template.description && (
                   <CardDescription>{template.description}</CardDescription>
                 )}
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span>{completedCount}/{totalCount} completadas</span>
-              </div>
+              {isOpen && !isLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Users className="h-4 w-4" />
+                  <span>{completedCount}/{totalCount} completadas</span>
+                </div>
+              )}
             </div>
           </CardHeader>
+        </CollapsibleTrigger>
+        
+        <CollapsibleContent>
           <CardContent>
-            {/* Patients table */}
-            {patientsWithResponses && patientsWithResponses.length > 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : patientsWithResponses && patientsWithResponses.length > 0 ? (
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
@@ -116,7 +116,7 @@ export default function AdminEvaluaciones() {
                         </TableCell>
                         <TableCell className="text-right">
                           {response ? (
-                            <Link to={`/admin/evaluaciones/${BASELINE_SLUG}/${profile.user_id}`}>
+                            <Link to={`/admin/evaluaciones/${template.slug}/${profile.user_id}`}>
                               <Button variant="outline" size="sm" className="gap-1">
                                 <Eye className="h-4 w-4" />
                                 <span className="hidden sm:inline">Ver</span>
@@ -139,16 +139,51 @@ export default function AdminEvaluaciones() {
               </div>
             )}
           </CardContent>
-        </Card>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
+  );
+}
+
+export default function AdminEvaluaciones() {
+  const { data: templates, isLoading } = useFormTemplates();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Evaluaciones</h1>
+          <p className="text-muted-foreground">
+            Gestiona los formularios y visualiza las respuestas de los pacientes
+          </p>
+        </div>
+        <CreateFormDialog />
+      </div>
+
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       )}
 
-      {/* No template found */}
-      {!isLoading && !template && (
+      {/* Templates list */}
+      {!isLoading && templates && templates.length > 0 && (
+        <div className="space-y-4">
+          {templates.map((template) => (
+            <TemplateSection key={template.id} template={template} />
+          ))}
+        </div>
+      )}
+
+      {/* No templates */}
+      {!isLoading && (!templates || templates.length === 0) && (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              No se encontró el template de evaluación baseline.
+            <p className="text-muted-foreground mb-4">
+              No hay formularios creados todavía
             </p>
+            <CreateFormDialog />
           </CardContent>
         </Card>
       )}
