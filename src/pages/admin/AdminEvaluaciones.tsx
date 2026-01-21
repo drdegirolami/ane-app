@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Pencil, Trash2, Send } from 'lucide-react';
+import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Pencil, Trash2, Send, ClipboardCheck, FileText } from 'lucide-react';
 import { useAllFormTemplates, usePublishFormTemplate, type FormTemplate } from '@/hooks/useFormTemplates';
 import { useAdminPatientsWithResponses } from '@/hooks/useAdminEvaluaciones';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -25,6 +25,13 @@ import CreateFormDialog from '@/components/forms/CreateFormDialog';
 import CreateTestDialog from '@/components/forms/CreateTestDialog';
 import EditFormDialog from '@/components/forms/EditFormDialog';
 import DeleteFormDialog from '@/components/forms/DeleteFormDialog';
+import { FormSchema } from '@/types/forms';
+
+// Helper to check if a template is a test (has scoring enabled)
+function isTestTemplate(template: FormTemplate): boolean {
+  const schema = template.schema_json as unknown as FormSchema;
+  return schema?.scoring?.enabled === true;
+}
 
 // Component for each template's expandable section
 function TemplateSection({ template }: { template: FormTemplate }) {
@@ -43,12 +50,12 @@ function TemplateSection({ template }: { template: FormTemplate }) {
     <>
       <Card>
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors py-4">
             <div className="flex items-start justify-between gap-4">
               <CollapsibleTrigger asChild>
                 <div className="space-y-1 flex-1 cursor-pointer">
                   <div className="flex items-center gap-2">
-                    <CardTitle className="text-lg">{template.title}</CardTitle>
+                    <CardTitle className="text-base font-medium">{template.title}</CardTitle>
                     {!template.is_active && (
                       <Badge variant="secondary" className="text-xs">
                         Borrador
@@ -61,13 +68,13 @@ function TemplateSection({ template }: { template: FormTemplate }) {
                     )}
                   </div>
                   {template.description && (
-                    <CardDescription>{template.description}</CardDescription>
+                    <CardDescription className="text-sm">{template.description}</CardDescription>
                   )}
                 </div>
               </CollapsibleTrigger>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {isOpen && !isLoading && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mr-2">
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mr-2">
                     <Users className="h-4 w-4" />
                     <span>{completedCount}/{totalCount}</span>
                   </div>
@@ -81,7 +88,7 @@ function TemplateSection({ template }: { template: FormTemplate }) {
                       publishMutation.mutate(template.id);
                     }}
                     disabled={publishMutation.isPending}
-                    title="Publicar test"
+                    title="Publicar"
                     className="gap-1"
                   >
                     <Send className="h-4 w-4" />
@@ -195,22 +202,68 @@ function TemplateSection({ template }: { template: FormTemplate }) {
   );
 }
 
+// Section component for grouping templates
+function TemplateListSection({ 
+  title, 
+  description, 
+  icon: Icon, 
+  templates, 
+  emptyMessage,
+  createButton 
+}: { 
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  templates: FormTemplate[];
+  emptyMessage: string;
+  createButton: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Icon className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+        {createButton}
+      </div>
+
+      {templates.length > 0 ? (
+        <div className="space-y-3">
+          {templates.map((template) => (
+            <TemplateSection key={template.id} template={template} />
+          ))}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-muted-foreground">{emptyMessage}</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 export default function AdminEvaluaciones() {
   const { data: templates, isLoading } = useAllFormTemplates();
 
+  // Separate tests from regular forms
+  const tests = templates?.filter(isTestTemplate) ?? [];
+  const forms = templates?.filter((t) => !isTestTemplate(t)) ?? [];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground mb-2">Evaluaciones</h1>
-          <p className="text-muted-foreground">
-            Gestiona los formularios y visualiza las respuestas de los pacientes
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <CreateFormDialog />
-          <CreateTestDialog />
-        </div>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Evaluaciones</h1>
+        <p className="text-muted-foreground">
+          Gestiona los tests y formularios, y visualiza las respuestas de los pacientes
+        </p>
       </div>
 
       {/* Loading state */}
@@ -220,25 +273,29 @@ export default function AdminEvaluaciones() {
         </div>
       )}
 
-      {/* Templates list */}
-      {!isLoading && templates && templates.length > 0 && (
-        <div className="space-y-4">
-          {templates.map((template) => (
-            <TemplateSection key={template.id} template={template} />
-          ))}
-        </div>
-      )}
+      {/* Content */}
+      {!isLoading && (
+        <div className="space-y-10">
+          {/* Tests Section */}
+          <TemplateListSection
+            title="Tests con puntaje"
+            description="Evaluaciones clínicas con resultados automáticos basados en puntaje"
+            icon={ClipboardCheck}
+            templates={tests}
+            emptyMessage="No hay tests creados todavía"
+            createButton={<CreateTestDialog />}
+          />
 
-      {/* No templates */}
-      {!isLoading && (!templates || templates.length === 0) && (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground mb-4">
-              No hay formularios creados todavía
-            </p>
-            <CreateFormDialog />
-          </CardContent>
-        </Card>
+          {/* Forms Section */}
+          <TemplateListSection
+            title="Formularios"
+            description="Cuestionarios y formularios de recopilación de datos"
+            icon={FileText}
+            templates={forms}
+            emptyMessage="No hay formularios creados todavía"
+            createButton={<CreateFormDialog />}
+          />
+        </div>
       )}
     </div>
   );
