@@ -162,6 +162,7 @@ export type Database = {
           patient_id: string
           submitted_at: string
           template_id: string
+          total_score: number | null
           updated_at: string
         }
         Insert: {
@@ -170,6 +171,7 @@ export type Database = {
           patient_id: string
           submitted_at?: string
           template_id: string
+          total_score?: number | null
           updated_at?: string
         }
         Update: {
@@ -178,6 +180,7 @@ export type Database = {
           patient_id?: string
           submitted_at?: string
           template_id?: string
+          total_score?: number | null
           updated_at?: string
         }
         Relationships: [

@@ -10,6 +10,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import DynamicForm from '@/components/forms/DynamicForm';
 import FormReadOnly from '@/components/forms/FormReadOnly';
 import { toast } from 'sonner';
+import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
+import { ScoreResult } from '@/types/forms';
 
 // Slugs that are locked after first submission (read-only, no edits)
 const LOCKED_SLUGS = ['baseline_0_2'];
@@ -24,6 +26,7 @@ export default function EvaluacionDetalle() {
   const upsertMutation = useUpsertMyFormResponse();
   const { data: nextStepData, isLoading: nextStepLoading } = useMyNextStep();
   const [savedSuccessfully, setSavedSuccessfully] = useState(false);
+  const [scoreResult, setScoreResult] = useState<{ score: number; result: ScoreResult } | null>(null);
 
   // Parse schema safely
   const schema = template?.schema_json as unknown as FormSchema | null;
@@ -34,14 +37,24 @@ export default function EvaluacionDetalle() {
   const isLockedSlug = LOCKED_SLUGS.includes(slug ?? '');
   const isLockedAndCompleted = isLockedSlug && !!existingResponse;
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
-    if (!template) return;
+  const handleSubmit = async (values: Record<string, unknown>, score?: number) => {
+    if (!template || !schema) return;
 
     try {
       await upsertMutation.mutateAsync({
         templateId: template.id,
         answersJson: values,
+        totalScore: score,
       });
+
+      // Si tiene scoring, obtener el resultado
+      if (score !== undefined && hasScoringEnabled(schema)) {
+        const result = getScoreResult(schema.scoring!, score);
+        if (result) {
+          setScoreResult({ score, result });
+        }
+      }
+
       setSavedSuccessfully(true);
       toast.success('¡Evaluación guardada correctamente!');
     } catch (error) {
@@ -92,8 +105,34 @@ export default function EvaluacionDetalle() {
           </div>
         )}
 
-        {/* Success state after saving */}
-        {savedSuccessfully && (
+        {/* Success state after saving - with score result if applicable */}
+        {savedSuccessfully && scoreResult ? (
+          // Resultado de test con puntaje
+          <Card wellness className="text-center">
+            <CardHeader>
+              <div className="mx-auto mb-4">
+                <CheckCircle2 className="h-12 w-12 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">{scoreResult.result.result_title}</CardTitle>
+              <CardDescription className="text-base whitespace-pre-line mt-4">
+                {scoreResult.result.result_text}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Link to="/evaluaciones">
+                <Button size="lg" className="w-full">
+                  Volver a Evaluaciones
+                </Button>
+              </Link>
+              <Link to="/">
+                <Button variant="outline" size="lg" className="w-full">
+                  Ir a Inicio
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : savedSuccessfully ? (
+          // Resultado genérico (formularios sin scoring)
           <Card wellness className="text-center">
             <CardHeader>
               <div className="mx-auto mb-4">
@@ -117,7 +156,7 @@ export default function EvaluacionDetalle() {
               </Link>
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
         {/* LOCKED: Read-only view for baseline evaluations already completed */}
         {!isLoading && !templateError && template && schema && !savedSuccessfully && isLockedAndCompleted && (

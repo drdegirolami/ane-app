@@ -22,6 +22,7 @@ import {
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import CreateFormDialog from '@/components/forms/CreateFormDialog';
+import CreateTestDialog from '@/components/forms/CreateTestDialog';
 
 // Component for each template's expandable section
 function TemplateSection({ template }: { template: { id: string; slug: string; title: string; description: string | null } }) {
@@ -157,7 +158,10 @@ export default function AdminEvaluaciones() {
             Gestiona los formularios y visualiza las respuestas de los pacientes
           </p>
         </div>
-        <CreateFormDialog />
+        <div className="flex gap-2">
+          <CreateFormDialog />
+          <CreateTestDialog />
+        </div>
       </div>
 
       {/* Loading state */}

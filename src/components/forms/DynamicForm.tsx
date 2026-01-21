@@ -17,12 +17,13 @@ import {
   FormItem,
   FormMessage,
 } from '@/components/ui/form';
+import { calculateScore, hasScoringEnabled } from '@/lib/scoring';
 
 interface DynamicFormProps {
   templateId: string;
   schema: FormSchema;
   initialValues?: Record<string, unknown>;
-  onSubmit: (values: Record<string, unknown>) => void;
+  onSubmit: (values: Record<string, unknown>, score?: number) => void;
   isSubmitting?: boolean;
 }
 
@@ -124,7 +125,14 @@ export default function DynamicForm({
         cleanedValues[key] = value;
       }
     });
-    onSubmit(cleanedValues);
+
+    // Calcular puntaje si el schema tiene scoring habilitado
+    let score: number | undefined;
+    if (hasScoringEnabled(schema)) {
+      score = calculateScore(schema, cleanedValues);
+    }
+
+    onSubmit(cleanedValues, score);
   };
 
   return (

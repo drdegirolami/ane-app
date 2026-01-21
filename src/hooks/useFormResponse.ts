@@ -56,6 +56,7 @@ export function useMyFormResponse(templateId: string) {
 type UpsertArgs = {
   templateId: string;
   answersJson: Record<string, unknown>;
+  totalScore?: number; // Puntaje calculado para tests con scoring
 };
 
 export function useUpsertMyFormResponse() {
@@ -63,7 +64,7 @@ export function useUpsertMyFormResponse() {
   const queryClient = useQueryClient();
 
   return useMutation<FormResponse, Error, UpsertArgs>({
-    mutationFn: async ({ templateId, answersJson }: UpsertArgs) => {
+    mutationFn: async ({ templateId, answersJson, totalScore }: UpsertArgs) => {
       if (!user?.id) {
         throw new Error('Not authenticated');
       }
@@ -72,6 +73,7 @@ export function useUpsertMyFormResponse() {
         template_id: templateId,
         patient_id: user.id,
         answers_json: answersJson as unknown as Database['public']['Tables']['form_responses']['Insert']['answers_json'],
+        total_score: totalScore ?? null,
         updated_at: new Date().toISOString(),
       };
 
