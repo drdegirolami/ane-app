@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react';
-import { useFormTemplates, type FormTemplate } from '@/hooks/useFormTemplates';
+import { useAllFormTemplates, type FormTemplate } from '@/hooks/useFormTemplates';
 import { useAdminPatientsWithResponses } from '@/hooks/useAdminEvaluaciones';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -179,7 +179,7 @@ function TemplateSection({ template }: { template: FormTemplate }) {
 }
 
 export default function AdminEvaluaciones() {
-  const { data: templates, isLoading } = useFormTemplates();
+  const { data: templates, isLoading } = useAllFormTemplates();
 
   return (
     <div className="space-y-6">
