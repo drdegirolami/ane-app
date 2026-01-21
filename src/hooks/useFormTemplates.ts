@@ -28,6 +28,26 @@ export function useFormTemplates() {
   });
 }
 
+// Hook for admin to see ALL templates (including drafts)
+export function useAllFormTemplates() {
+  return useQuery<FormTemplate[], Error>({
+    queryKey: ['form-templates', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('form_templates')
+        .select('*')
+        .order('is_active', { ascending: false }) // Active first, then drafts
+        .order('order_index', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      return data ?? [];
+    },
+  });
+}
+
 export function useFormTemplateBySlug(slug: string) {
   return useQuery<FormTemplate | null, Error>({
     queryKey: ['form-template', slug],
