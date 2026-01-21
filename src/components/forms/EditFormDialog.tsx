@@ -462,13 +462,7 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
             {/* Score results (only for tests) */}
             {isTest && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">Rangos de Resultados</h3>
-                  <Button type="button" variant="outline" size="sm" onClick={addScoreResult}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Agregar rango
-                  </Button>
-                </div>
+                <h3 className="text-lg font-medium">Rangos de Resultados</h3>
 
                 {scoreResults.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
@@ -531,6 +525,11 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
                     </CardContent>
                   </Card>
                 ))}
+
+                <Button type="button" variant="outline" className="w-full" onClick={addScoreResult}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agregar rango
+                </Button>
               </div>
             )}
 
