@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Pencil, Trash2, Send, ClipboardCheck, FileText } from 'lucide-react';
+import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Pencil, Trash2, Send, ClipboardCheck, FileText, Play } from 'lucide-react';
 import { useAllFormTemplates, usePublishFormTemplate, type FormTemplate } from '@/hooks/useFormTemplates';
 import { useAdminPatientsWithResponses } from '@/hooks/useAdminEvaluaciones';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -95,6 +95,15 @@ function TemplateSection({ template }: { template: FormTemplate }) {
                     Publicar
                   </Button>
                 )}
+                <Link to={`/admin/evaluaciones/preview/${template.slug}`} onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    title="Vista previa"
+                  >
+                    <Play className="h-4 w-4" />
+                  </Button>
+                </Link>
                 <Button
                   variant="ghost"
                   size="icon"
