@@ -115,7 +115,12 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
         label: '',
         type: isTest ? 'radio' : 'text',
         required: true,
-        options: isTest ? [{ value: 'opt_1', label: '', score: 0 }] : [],
+        options: isTest 
+          ? [
+              { value: 'opt_1', label: '', score: 0 },
+              { value: 'opt_2', label: '', score: 1 },
+            ] 
+          : [],
       },
     ]);
   };
@@ -138,10 +143,11 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
   const addOption = (fieldIndex: number) => {
     const newFields = [...fields];
     const optNum = newFields[fieldIndex].options.length + 1;
+    const nextScore = newFields[fieldIndex].options.length;
     newFields[fieldIndex].options.push({
       value: `opt_${optNum}`,
       label: '',
-      ...(isTest ? { score: 0 } : {}),
+      ...(isTest ? { score: nextScore } : {}),
     });
     setFields(newFields);
   };
