@@ -48,6 +48,11 @@ function TemplateSection({ template }: { template: FormTemplate }) {
                 <div className="space-y-1 flex-1 cursor-pointer">
                   <div className="flex items-center gap-2">
                     <CardTitle className="text-lg">{template.title}</CardTitle>
+                    {!template.is_active && (
+                      <Badge variant="secondary" className="text-xs">
+                        Borrador
+                      </Badge>
+                    )}
                     {isOpen ? (
                       <ChevronUp className="h-4 w-4 text-muted-foreground" />
                     ) : (
