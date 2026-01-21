@@ -9,7 +9,7 @@ interface AuthContextType {
   session: Session | null;
   role: UserRole | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
@@ -39,6 +39,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Check if this is a fresh browser session that shouldn't have remembered the user
+    const checkSessionOnly = async () => {
+      const sessionOnlyFlag = sessionStorage.getItem('session_only');
+      const wasSessionOnly = localStorage.getItem('was_session_only');
+      
+      if (wasSessionOnly === 'true' && !sessionOnlyFlag) {
+        // Browser was closed and user didn't want to be remembered
+        localStorage.removeItem('was_session_only');
+        await supabase.auth.signOut();
+        return true;
+      }
+      return false;
+    };
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -59,7 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initSession = async () => {
+      const shouldSignOut = await checkSessionOnly();
+      if (shouldSignOut) {
+        setIsLoading(false);
+        return;
+      }
+      
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -68,16 +89,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       setIsLoading(false);
-    });
+    };
+    
+    initSession();
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe: boolean = true) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
+    if (!error && !rememberMe) {
+      // Mark this session as "session only" - will be cleared when browser closes
+      sessionStorage.setItem('session_only', 'true');
+      localStorage.setItem('was_session_only', 'true');
+    } else if (!error && rememberMe) {
+      // Clear any previous "session only" flags
+      sessionStorage.removeItem('session_only');
+      localStorage.removeItem('was_session_only');
+    }
+    
     return { error };
   };
 
