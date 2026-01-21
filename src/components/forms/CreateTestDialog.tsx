@@ -459,15 +459,9 @@ export default function CreateTestDialog() {
 
           {/* Score Results */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-base">Rangos de resultado</Label>
-                <p className="text-sm text-muted-foreground">Define qué mensaje ve el paciente según su puntaje</p>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={addScoreResult}>
-                <Plus className="h-4 w-4 mr-1" />
-                Agregar rango
-              </Button>
+            <div>
+              <Label className="text-base">Rangos de resultado</Label>
+              <p className="text-sm text-muted-foreground">Define qué mensaje ve el paciente según su puntaje</p>
             </div>
 
             {scoreResults.map((result, index) => (
@@ -523,6 +517,11 @@ export default function CreateTestDialog() {
                 </CardContent>
               </Card>
             ))}
+
+            <Button type="button" variant="outline" className="w-full" onClick={addScoreResult}>
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar rango
+            </Button>
           </div>
 
           {/* Submit */}
