@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 const adminNavItems = [
   { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { path: '/admin/pacientes', icon: Users, label: 'Pacientes' },
+  { path: '/admin/evaluaciones', icon: FileText, label: 'Evaluaciones' },
   { path: '/admin/contenidos', icon: FileText, label: 'Contenidos' },
   { path: '/admin/planning', icon: Calendar, label: 'Planning' },
   { path: '/admin/mensajes', icon: MessageSquare, label: 'Mensajes' },

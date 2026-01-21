@@ -13,7 +13,7 @@ interface AppLayoutProps {
 const navItems = [
   { path: '/', icon: Home, label: 'Inicio' },
   { path: '/planning', icon: Calendar, label: 'Planning' },
-  { path: '/checkin', icon: ClipboardList, label: 'Check-in' },
+  { path: '/evaluaciones', icon: ClipboardList, label: 'Evaluaciones' },
   { path: '/situaciones', icon: AlertTriangle, label: 'Situaciones' },
   { path: '/mensaje', icon: MessageCircle, label: 'Mensaje' },
   { path: '/info', icon: Info, label: 'Info' },
