@@ -308,15 +308,9 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
 
             {/* Fields section */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">
-                  {isTest ? 'Preguntas' : 'Campos'}
-                </h3>
-                <Button type="button" variant="outline" size="sm" onClick={addField}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Agregar {isTest ? 'pregunta' : 'campo'}
-                </Button>
-              </div>
+              <h3 className="text-lg font-medium">
+                {isTest ? 'Preguntas' : 'Campos'}
+              </h3>
 
               {fields.length === 0 && (
                 <p className="text-sm text-muted-foreground text-center py-4">
@@ -391,18 +385,7 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
                     {/* Options for radio/checkbox or tests */}
                     {(field.type === 'radio' || field.type === 'checkbox' || isTest) && (
                       <div className="space-y-3 pl-4 border-l-2 border-muted">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm">Opciones</Label>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => addOption(fieldIndex)}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Opción
-                          </Button>
-                        </div>
+                        <Label className="text-sm">Opciones</Label>
                         {field.options.map((opt, optIndex) => (
                           <div key={optIndex} className="flex items-center gap-2">
                             <Input
@@ -437,11 +420,28 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
                             </Button>
                           </div>
                         ))}
+                        {/* Add option button - below last option */}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => addOption(fieldIndex)}
+                        >
+                          <Plus className="h-3 w-3 mr-1" />
+                          Agregar opción
+                        </Button>
                       </div>
                     )}
                   </CardContent>
                 </Card>
               ))}
+
+              {/* Add field/question button - below last field */}
+              <Button type="button" variant="outline" className="w-full" onClick={addField}>
+                <Plus className="h-4 w-4 mr-2" />
+                Agregar {isTest ? 'pregunta' : 'campo'}
+              </Button>
             </div>
 
             {/* Score results (only for tests) */}
