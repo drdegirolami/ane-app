@@ -77,6 +77,30 @@ interface UpdateTemplateArgs {
   schemaJson: FormSchema;
 }
 
+// Publish (activate) a draft template
+export function usePublishFormTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (templateId: string) => {
+      const { error } = await supabase
+        .from('form_templates')
+        .update({ is_active: true })
+        .eq('id', templateId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['form-templates'] });
+      toast.success('Test publicado correctamente');
+    },
+    onError: (error) => {
+      console.error('Error publishing template:', error);
+      toast.error('Error al publicar el test');
+    },
+  });
+}
+
 export function useUpdateFormTemplate() {
   const queryClient = useQueryClient();
 
