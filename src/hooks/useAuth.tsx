@@ -39,23 +39,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Check if this is a fresh browser session that shouldn't have remembered the user
-    const checkSessionOnly = async () => {
-      const sessionOnlyFlag = sessionStorage.getItem('session_only');
-      const wasSessionOnly = localStorage.getItem('was_session_only');
-      
-      if (wasSessionOnly === 'true' && !sessionOnlyFlag) {
-        // Browser was closed and user didn't want to be remembered
-        localStorage.removeItem('was_session_only');
-        await supabase.auth.signOut();
-        return true;
-      }
-      return false;
-    };
-
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        // Check if this is a fresh browser session that shouldn't have remembered the user
+        const sessionOnlyFlag = sessionStorage.getItem('session_only');
+        const wasSessionOnly = localStorage.getItem('was_session_only');
+        
+        if (wasSessionOnly === 'true' && !sessionOnlyFlag && session) {
+          // Browser was closed and user didn't want to be remembered
+          localStorage.removeItem('was_session_only');
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setRole(null);
+          setIsLoading(false);
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -73,14 +74,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // THEN check for existing session
-    const initSession = async () => {
-      const shouldSignOut = await checkSessionOnly();
-      if (shouldSignOut) {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      // Check if this is a fresh browser session that shouldn't have remembered the user
+      const sessionOnlyFlag = sessionStorage.getItem('session_only');
+      const wasSessionOnly = localStorage.getItem('was_session_only');
+      
+      if (wasSessionOnly === 'true' && !sessionOnlyFlag && session) {
+        // Browser was closed and user didn't want to be remembered
+        localStorage.removeItem('was_session_only');
+        await supabase.auth.signOut();
         setIsLoading(false);
         return;
       }
       
-      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -89,9 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       setIsLoading(false);
-    };
-    
-    initSession();
+    });
 
     return () => subscription.unsubscribe();
   }, []);
