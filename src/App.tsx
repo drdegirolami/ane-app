@@ -19,6 +19,7 @@ import Evaluaciones from "./pages/Evaluaciones";
 import EvaluacionDetalle from "./pages/EvaluacionDetalle";
 import EvaluacionInicial from "./pages/EvaluacionInicial";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 
 // Admin pages
@@ -45,8 +46,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Auth Route */}
-              <Route path="/auth" element={<Auth />} />
+            {/* Auth Routes */}
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
               
               {/* Patient Routes - Protected */}
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
