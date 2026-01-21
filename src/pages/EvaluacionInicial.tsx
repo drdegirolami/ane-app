@@ -9,11 +9,16 @@ import AppLayout from '@/components/layout/AppLayout';
 import DynamicForm from '@/components/forms/DynamicForm';
 import { useFormTemplateBySlug } from '@/hooks/useFormTemplates';
 import { useMyFormResponse, useUpsertMyFormResponse } from '@/hooks/useFormResponse';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { FormSchema } from '@/types/forms';
 import { toast } from 'sonner';
 
 export default function EvaluacionInicial() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Cargar template por slug
@@ -28,6 +33,32 @@ export default function EvaluacionInicial() {
   const isLoading = loadingTemplate || loadingResponse;
   const hasExistingResponse = !!existingResponse;
 
+  // Avanzar al próximo paso después de completar la evaluación
+  const advanceToNextStep = async () => {
+    if (!user?.id) return;
+
+    try {
+      // Upsert: actualizar patient_next_steps al siguiente paso (planning_semanal)
+      await supabase
+        .from('patient_next_steps')
+        .upsert({
+          patient_id: user.id,
+          next_step_slug: 'planning_semanal',
+          next_step_title: 'Ver planning semanal',
+          next_step_url: '/planning',
+          available: true,
+          available_from: null,
+        }, {
+          onConflict: 'patient_id',
+        });
+
+      // Invalidar query para que Index.tsx se actualice
+      queryClient.invalidateQueries({ queryKey: ['my-next-step'] });
+    } catch (error) {
+      console.error('Error advancing to next step:', error);
+    }
+  };
+
   const handleSubmit = async (values: Record<string, unknown>) => {
     if (!template?.id) return;
 
@@ -36,6 +67,10 @@ export default function EvaluacionInicial() {
         templateId: template.id,
         answersJson: values,
       });
+      
+      // Avanzar al próximo paso
+      await advanceToNextStep();
+      
       setShowSuccess(true);
     } catch (error) {
       toast.error('Error al guardar. Intentá de nuevo.');
