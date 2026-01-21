@@ -341,11 +341,11 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
                   <CardContent className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label>Etiqueta / Pregunta</Label>
+                        <Label>Key (único)</Label>
                         <Input
-                          value={field.label}
-                          onChange={(e) => updateField(fieldIndex, { label: e.target.value })}
-                          placeholder={isTest ? 'Ej: ¿Cómo te sientes hoy?' : 'Ej: Nombre completo'}
+                          value={field.key}
+                          onChange={(e) => updateField(fieldIndex, { key: e.target.value })}
+                          placeholder="pregunta_1"
                         />
                       </div>
                       {!isTest && (
@@ -372,6 +372,15 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
                           </Select>
                         </div>
                       )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Etiqueta / Pregunta</Label>
+                      <Input
+                        value={field.label}
+                        onChange={(e) => updateField(fieldIndex, { label: e.target.value })}
+                        placeholder={isTest ? 'Ej: ¿Cómo te sientes hoy?' : 'Ej: Nombre completo'}
+                      />
                     </div>
 
                     <div className="flex items-center gap-2">
