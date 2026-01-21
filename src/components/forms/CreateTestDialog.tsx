@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Loader2, Trash2, ClipboardCheck } from 'lucide-react';
+import { Plus, Loader2, Trash2, ClipboardCheck, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -136,69 +136,124 @@ export default function CreateTestDialog() {
     }
   };
 
-  const handleSubmit = async (values: FormValues) => {
+  const buildSchemaJson = (): FormSchema => {
+    return {
+      version: 1,
+      sections: [
+        {
+          title: 'Preguntas',
+          fields: questions.map((q) => ({
+            key: q.key,
+            label: q.label,
+            type: 'radio' as const,
+            required: q.required,
+            options: q.options.map((o) => ({
+              value: o.value,
+              label: o.label,
+              score: o.score,
+            })),
+          })),
+        },
+      ],
+      scoring: {
+        enabled: true,
+        results: scoreResults,
+      },
+    };
+  };
+
+  const validateForCompletion = (): boolean => {
     if (questions.length === 0) {
       toast.error('Agregá al menos una pregunta');
-      return;
+      return false;
     }
 
-    // Validate questions
     for (const question of questions) {
       if (!question.label.trim()) {
         toast.error('Todas las preguntas deben tener una etiqueta');
-        return;
+        return false;
       }
       if (question.options.length < 2) {
         toast.error(`La pregunta "${question.label}" necesita al menos 2 opciones`);
-        return;
+        return false;
       }
       for (const option of question.options) {
         if (!option.label.trim()) {
           toast.error('Todas las opciones deben tener una etiqueta');
-          return;
+          return false;
         }
       }
     }
 
-    // Validate score results
     for (const result of scoreResults) {
       if (!result.result_title.trim() || !result.result_text.trim()) {
         toast.error('Todos los rangos de resultado deben tener título y texto');
-        return;
+        return false;
       }
       if (result.min_score > result.max_score) {
         toast.error('El puntaje mínimo no puede ser mayor al máximo');
-        return;
+        return false;
       }
+    }
+
+    return true;
+  };
+
+  const handleSaveDraft = async () => {
+    const values = form.getValues();
+    
+    if (!values.slug.trim()) {
+      toast.error('El slug es requerido para guardar');
+      return;
+    }
+    if (!values.title.trim()) {
+      toast.error('El título es requerido para guardar');
+      return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Build schema with scoring
-      const schemaJson: FormSchema = {
-        version: 1,
-        sections: [
-          {
-            title: 'Preguntas',
-            fields: questions.map((q) => ({
-              key: q.key,
-              label: q.label,
-              type: 'radio' as const,
-              required: q.required,
-              options: q.options.map((o) => ({
-                value: o.value,
-                label: o.label,
-                score: o.score,
-              })),
-            })),
-          },
-        ],
-        scoring: {
-          enabled: true,
-          results: scoreResults,
-        },
-      };
+      const schemaJson = buildSchemaJson();
+
+      const { error } = await supabase.from('form_templates').insert([{
+        slug: values.slug,
+        title: values.title,
+        description: values.description || null,
+        schema_json: JSON.parse(JSON.stringify(schemaJson)),
+        is_active: false, // Draft mode
+        order_index: 0,
+      }]);
+
+      if (error) throw error;
+
+      toast.success('Borrador guardado correctamente');
+      queryClient.invalidateQueries({ queryKey: ['form-templates'] });
+      setOpen(false);
+      form.reset();
+      setQuestions([]);
+      setScoreResults([{ min_score: 0, max_score: 4, result_title: '', result_text: '' }]);
+    } catch (error: any) {
+      console.error('Error saving draft:', error);
+      if (error.code === '23505') {
+        toast.error('Ya existe un test con ese slug');
+      } else {
+        toast.error('Error al guardar el borrador');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (values: FormValues) => {
+    if (!validateForCompletion()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const schemaJson = buildSchemaJson();
 
       const { error } = await supabase.from('form_templates').insert([{
         slug: values.slug,
@@ -286,15 +341,9 @@ export default function CreateTestDialog() {
 
           {/* Questions */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-base">Preguntas</Label>
-                <p className="text-sm text-muted-foreground">Cada opción tiene un puntaje asociado</p>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={addQuestion}>
-                <Plus className="h-4 w-4 mr-1" />
-                Agregar pregunta
-              </Button>
+            <div>
+              <Label className="text-base">Preguntas</Label>
+              <p className="text-sm text-muted-foreground">Cada opción tiene un puntaje asociado</p>
             </div>
 
             {questions.length === 0 && (
@@ -398,6 +447,12 @@ export default function CreateTestDialog() {
                 </CardContent>
               </Card>
             ))}
+
+            {/* Add question button - always below last question */}
+            <Button type="button" variant="outline" className="w-full" onClick={addQuestion}>
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar pregunta
+            </Button>
           </div>
 
           <Separator />
@@ -471,14 +526,25 @@ export default function CreateTestDialog() {
           </div>
 
           {/* Submit */}
-          <div className="flex justify-end gap-2 pt-4 border-t">
+          <div className="flex justify-between gap-2 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Crear test
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={handleSaveDraft}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                Guardar borrador
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Crear test
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
