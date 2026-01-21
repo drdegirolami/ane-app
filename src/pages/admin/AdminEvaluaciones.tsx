@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react';
-import { useAllFormTemplates, type FormTemplate } from '@/hooks/useFormTemplates';
+import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Pencil, Trash2, Send } from 'lucide-react';
+import { useAllFormTemplates, usePublishFormTemplate, type FormTemplate } from '@/hooks/useFormTemplates';
 import { useAdminPatientsWithResponses } from '@/hooks/useAdminEvaluaciones';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ function TemplateSection({ template }: { template: FormTemplate }) {
   const [isOpen, setIsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const publishMutation = usePublishFormTemplate();
   const { data: patientsWithResponses, isLoading } = useAdminPatientsWithResponses(
     isOpen ? template.id : ''
   );
@@ -70,6 +71,22 @@ function TemplateSection({ template }: { template: FormTemplate }) {
                     <Users className="h-4 w-4" />
                     <span>{completedCount}/{totalCount}</span>
                   </div>
+                )}
+                {!template.is_active && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      publishMutation.mutate(template.id);
+                    }}
+                    disabled={publishMutation.isPending}
+                    title="Publicar test"
+                    className="gap-1"
+                  >
+                    <Send className="h-4 w-4" />
+                    Publicar
+                  </Button>
                 )}
                 <Button
                   variant="ghost"
