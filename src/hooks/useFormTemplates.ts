@@ -69,6 +69,27 @@ export function useFormTemplateBySlug(slug: string) {
   });
 }
 
+// Hook for admin to preview any template (including drafts)
+export function useFormTemplateBySlugAdmin(slug: string) {
+  return useQuery<FormTemplate | null, Error>({
+    queryKey: ['form-template-admin', slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('form_templates')
+        .select('*')
+        .eq('slug', slug)
+        .maybeSingle();
+
+      if (error) {
+        throw error;
+      }
+
+      return data;
+    },
+    enabled: !!slug,
+  });
+}
+
 // Update form template mutation
 interface UpdateTemplateArgs {
   id: string;
