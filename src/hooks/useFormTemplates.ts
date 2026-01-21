@@ -112,6 +112,7 @@ export function useUpdateFormTemplate() {
           title,
           description,
           schema_json: schemaJson as unknown as Database['public']['Tables']['form_templates']['Update']['schema_json'],
+          is_active: false, // Mark as draft after editing, requires re-publish
         })
         .eq('id', id);
 
