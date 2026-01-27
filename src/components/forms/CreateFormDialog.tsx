@@ -228,13 +228,7 @@ export default function CreateFormDialog() {
 
           {/* Fields */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>Campos del formulario</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addField}>
-                <Plus className="h-4 w-4 mr-1" />
-                Agregar campo
-              </Button>
-            </div>
+            <Label>Campos del formulario</Label>
 
             {fields.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
@@ -308,19 +302,7 @@ export default function CreateFormDialog() {
                   {/* Options for radio/checkbox */}
                   {(field.type === 'radio' || field.type === 'checkbox') && (
                     <div className="space-y-2 pt-2 border-t">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs">Opciones</Label>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 text-xs"
-                          onClick={() => addOption(index)}
-                        >
-                          <Plus className="h-3 w-3 mr-1" />
-                          Agregar
-                        </Button>
-                      </div>
+                      <Label className="text-xs">Opciones</Label>
                       {field.options.map((option, optIndex) => (
                         <div key={optIndex} className="flex gap-2 items-center">
                           <Input
@@ -346,11 +328,28 @@ export default function CreateFormDialog() {
                           </Button>
                         </div>
                       ))}
+                      {/* Add option button - below last option */}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="w-full h-7 text-xs"
+                        onClick={() => addOption(index)}
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Agregar opción
+                      </Button>
                     </div>
                   )}
                 </CardContent>
               </Card>
             ))}
+
+            {/* Add field button - always at the bottom */}
+            <Button type="button" variant="outline" className="w-full" onClick={addField}>
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar campo
+            </Button>
           </div>
 
           {/* Submit */}
