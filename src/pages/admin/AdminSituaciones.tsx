@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { AlertTriangle, Plus, Edit, Trash2, Loader2, Save, GripVertical } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { AlertTriangle, Plus, Edit, Trash2, Loader2, Save, GripVertical, Download, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { toast as sonnerToast } from 'sonner';
 
 interface Situation {
   id: string;
@@ -16,6 +17,84 @@ interface Situation {
   tips: string[] | null;
   sort_order: number | null;
   updated_at: string | null;
+}
+
+function ExportSituacionesButton() {
+  const [loading, setLoading] = useState(false);
+
+  const handleExport = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('difficult_situations')
+        .select('*')
+        .order('sort_order');
+      if (error) throw error;
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `situaciones-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      sonnerToast.success(`${data.length} situaciones exportadas`);
+    } catch (e: any) {
+      sonnerToast.error('Error al exportar: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Button variant="outline" size="sm" onClick={handleExport} disabled={loading} className="gap-1">
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+      Exportar
+    </Button>
+  );
+}
+
+function ImportSituacionesButton({ onImported }: { onImported: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const text = await file.text();
+      const items = JSON.parse(text);
+      if (!Array.isArray(items)) throw new Error('El archivo debe contener un array');
+      let imported = 0;
+      for (const item of items) {
+        const { id, updated_at, ...rest } = item;
+        const { error } = await supabase.from('difficult_situations').insert(rest);
+        if (error) {
+          console.error('Error importing:', item.title, error);
+          sonnerToast.error(`Error en "${item.title}": ${error.message}`);
+        } else {
+          imported++;
+        }
+      }
+      onImported();
+      sonnerToast.success(`${imported} de ${items.length} situaciones importadas`);
+    } catch (e: any) {
+      sonnerToast.error('Error al importar: ' + e.message);
+    } finally {
+      setLoading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+      <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={loading} className="gap-1">
+        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+        Importar
+      </Button>
+    </>
+  );
 }
 
 export default function AdminSituaciones() {
@@ -184,10 +263,14 @@ export default function AdminSituaciones() {
             Gestiona las guías para situaciones complicadas
           </p>
         </div>
-        <Button variant="wellness" onClick={openCreateDialog}>
-          <Plus className="h-4 w-4" />
-          Nueva situación
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <ExportSituacionesButton />
+          <ImportSituacionesButton onImported={fetchSituations} />
+          <Button variant="wellness" onClick={openCreateDialog}>
+            <Plus className="h-4 w-4" />
+            Nueva situación
+          </Button>
+        </div>
       </div>
 
       {situations.length === 0 ? (
