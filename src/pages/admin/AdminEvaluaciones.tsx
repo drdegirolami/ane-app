@@ -26,6 +26,7 @@ import CreateTestDialog from '@/components/forms/CreateTestDialog';
 import EditFormDialog from '@/components/forms/EditFormDialog';
 import DeleteFormDialog from '@/components/forms/DeleteFormDialog';
 import { FormSchema } from '@/types/forms';
+import { ExportButton, ImportButton } from '@/components/forms/ExportImportButtons';
 
 // Helper to check if a template is a test (has scoring enabled)
 function isTestTemplate(template: FormTemplate): boolean {
@@ -270,9 +271,15 @@ export default function AdminEvaluaciones() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-foreground mb-2">Evaluaciones</h1>
-        <p className="text-muted-foreground">
-          Gestiona los tests y formularios, y visualiza las respuestas de los pacientes
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-muted-foreground">
+            Gestiona los tests y formularios, y visualiza las respuestas de los pacientes
+          </p>
+          <div className="flex gap-2">
+            <ExportButton />
+            <ImportButton />
+          </div>
+        </div>
       </div>
 
       {/* Loading state */}
