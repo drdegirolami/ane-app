@@ -32,8 +32,8 @@ interface DynamicFormProps {
 function buildZodSchema(schema: FormSchema) {
   const shape: Record<string, z.ZodTypeAny> = {};
 
-  schema.sections.forEach((section) => {
-    section.fields.forEach((field) => {
+  (schema.sections ?? []).forEach((section) => {
+    (section.fields ?? []).forEach((field) => {
       let fieldSchema: z.ZodTypeAny;
 
       switch (field.type) {
