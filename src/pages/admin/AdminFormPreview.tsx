@@ -4,6 +4,7 @@ import { ArrowLeft, AlertTriangle, CheckCircle, Loader2, Eye } from 'lucide-reac
 import { useFormTemplateBySlugAdmin } from '@/hooks/useFormTemplates';
 import { FormSchema, ScoreResult } from '@/types/forms';
 import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
+import { normalizeFormSchema } from '@/lib/formSchema';
 import DynamicForm from '@/components/forms/DynamicForm';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -47,11 +48,10 @@ export default function AdminFormPreview() {
     );
   }
 
-  const schema = template.schema_json as unknown as FormSchema;
+  const schema = normalizeFormSchema(template.schema_json as unknown as FormSchema);
   const isTest = hasScoringEnabled(schema);
 
   const handlePreviewSubmit = (values: Record<string, unknown>, score?: number) => {
-    // Don't save anything - just show the result for tests
     if (isTest && score !== undefined && schema.scoring) {
       const result = getScoreResult(schema.scoring, score);
       if (result) {
@@ -68,7 +68,6 @@ export default function AdminFormPreview() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link to="/admin/evaluaciones">
@@ -92,7 +91,6 @@ export default function AdminFormPreview() {
         </div>
       </div>
 
-      {/* Preview Mode Alert */}
       <Alert>
         <Eye className="h-4 w-4" />
         <AlertTitle>Modo vista previa</AlertTitle>
@@ -101,7 +99,6 @@ export default function AdminFormPreview() {
         </AlertDescription>
       </Alert>
 
-      {/* Result Screen (for tests) */}
       {submitted && previewResult && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
@@ -114,8 +111,8 @@ export default function AdminFormPreview() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg bg-background border">
-              <h3 className="font-semibold text-lg mb-2">{previewResult.result.result_title}</h3>
+            <div className="rounded-lg border bg-background p-4">
+              <h3 className="mb-2 text-lg font-semibold">{previewResult.result.result_title}</h3>
               <p className="text-muted-foreground">{previewResult.result.result_text}</p>
             </div>
             <Button onClick={handleReset} variant="outline" className="w-full">
@@ -125,7 +122,6 @@ export default function AdminFormPreview() {
         </Card>
       )}
 
-      {/* Success Screen (for forms) */}
       {submitted && !previewResult && (
         <Card className="border-primary/20 bg-primary/5">
           <CardHeader>
@@ -145,7 +141,6 @@ export default function AdminFormPreview() {
         </Card>
       )}
 
-      {/* Form */}
       {!submitted && (
         <DynamicForm
           templateId={template.id}
