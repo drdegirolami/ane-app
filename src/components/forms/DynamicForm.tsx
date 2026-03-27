@@ -79,7 +79,7 @@ function buildZodSchema(schema: FormSchema) {
 
 // Get all fields flattened
 function getAllFields(schema: FormSchema): FormFieldType[] {
-  return schema.sections.flatMap((section) => section.fields);
+  return (schema.sections ?? []).flatMap((section) => section.fields ?? []);
 }
 
 export default function DynamicForm({
