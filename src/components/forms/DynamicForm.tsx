@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { calculateScore, hasScoringEnabled } from '@/lib/scoring';
+import { normalizeFormSchema } from '@/lib/formSchema';
 
 interface DynamicFormProps {
   templateId: string;
@@ -27,8 +28,6 @@ interface DynamicFormProps {
   isSubmitting?: boolean;
 }
 
-// Build Zod schema dynamically from FormSchema
-// Tipos guardados: text/textarea -> string, number -> number, radio -> string, checkbox -> string[]
 function buildZodSchema(schema: FormSchema) {
   const shape: Record<string, z.ZodTypeAny> = {};
 
@@ -77,7 +76,6 @@ function buildZodSchema(schema: FormSchema) {
   return z.object(shape);
 }
 
-// Get all fields flattened
 function getAllFields(schema: FormSchema): FormFieldType[] {
   return (schema.sections ?? []).flatMap((section) => section.fields ?? []);
 }
@@ -89,16 +87,15 @@ export default function DynamicForm({
   onSubmit,
   isSubmitting = false,
 }: DynamicFormProps) {
-  const zodSchema = buildZodSchema(schema);
-  
-  // Build default values with correct types
-  const allFields = getAllFields(schema);
+  const normalizedSchema = normalizeFormSchema(schema);
+  const zodSchema = buildZodSchema(normalizedSchema);
+
+  const allFields = getAllFields(normalizedSchema);
   const defaultValues: Record<string, unknown> = {};
   allFields.forEach((field) => {
     if (initialValues[field.key] !== undefined) {
       defaultValues[field.key] = initialValues[field.key];
     } else {
-      // Default values by type
       switch (field.type) {
         case 'checkbox':
           defaultValues[field.key] = [];
@@ -118,7 +115,6 @@ export default function DynamicForm({
   });
 
   const handleSubmit = (values: Record<string, unknown>) => {
-    // Clean up empty strings for optional fields
     const cleanedValues: Record<string, unknown> = {};
     Object.entries(values).forEach(([key, value]) => {
       if (value !== '' && value !== undefined) {
@@ -126,10 +122,9 @@ export default function DynamicForm({
       }
     });
 
-    // Calcular puntaje si el schema tiene scoring habilitado
     let score: number | undefined;
-    if (hasScoringEnabled(schema)) {
-      score = calculateScore(schema, cleanedValues);
+    if (hasScoringEnabled(normalizedSchema)) {
+      score = calculateScore(normalizedSchema, cleanedValues);
     }
 
     onSubmit(cleanedValues, score);
@@ -138,7 +133,7 @@ export default function DynamicForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {schema.sections.map((section, sectionIndex) => (
+        {normalizedSchema.sections.map((section, sectionIndex) => (
           <Card key={sectionIndex} wellness>
             <CardHeader>
               <CardTitle className="text-lg">{section.title}</CardTitle>
@@ -156,13 +151,11 @@ export default function DynamicForm({
                     <FormItem>
                       <Label className="flex items-start gap-1">
                         {field.label}
-                        {field.required && (
-                          <span className="text-destructive">*</span>
-                        )}
+                        {field.required && <span className="text-destructive">*</span>}
                       </Label>
                       {field.helpText && (
-                        <div className="flex items-start gap-1.5 text-xs text-muted-foreground mb-2">
-                          <HelpCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                        <div className="mb-2 flex items-start gap-1.5 text-xs text-muted-foreground">
+                          <HelpCircle className="mt-0.5 h-3 w-3 shrink-0" />
                           <span>{field.helpText}</span>
                         </div>
                       )}
@@ -170,7 +163,7 @@ export default function DynamicForm({
                         {field.type === 'textarea' ? (
                           <Textarea
                             {...formField}
-                            value={formField.value as string ?? ''}
+                            value={(formField.value as string) ?? ''}
                             placeholder="Escribí tu respuesta..."
                             className="min-h-[100px]"
                           />
@@ -178,25 +171,22 @@ export default function DynamicForm({
                           <Input
                             {...formField}
                             type="number"
-                            value={formField.value as string ?? ''}
+                            value={(formField.value as string) ?? ''}
                             placeholder="0"
                             inputMode="decimal"
                           />
                         ) : field.type === 'radio' && field.options ? (
                           <RadioGroup
-                            value={formField.value as string ?? ''}
+                            value={(formField.value as string) ?? ''}
                             onValueChange={formField.onChange}
                             className="space-y-2"
                           >
                             {field.options.map((option) => (
                               <div key={option.value} className="flex items-center space-x-3">
-                                <RadioGroupItem 
-                                  value={option.value} 
-                                  id={`${field.key}-${option.value}`} 
-                                />
-                                <Label 
-                                  htmlFor={`${field.key}-${option.value}`} 
-                                  className="font-normal cursor-pointer"
+                                <RadioGroupItem value={option.value} id={`${field.key}-${option.value}`} />
+                                <Label
+                                  htmlFor={`${field.key}-${option.value}`}
+                                  className="cursor-pointer font-normal"
                                 >
                                   {option.label}
                                 </Label>
@@ -208,7 +198,7 @@ export default function DynamicForm({
                             {field.options.map((option) => {
                               const values = (formField.value as string[]) || [];
                               const isChecked = values.includes(option.value);
-                              
+
                               return (
                                 <div key={option.value} className="flex items-center space-x-3">
                                   <Checkbox
@@ -221,9 +211,9 @@ export default function DynamicForm({
                                       formField.onChange(newValues);
                                     }}
                                   />
-                                  <Label 
-                                    htmlFor={`${field.key}-${option.value}`} 
-                                    className="font-normal cursor-pointer"
+                                  <Label
+                                    htmlFor={`${field.key}-${option.value}`}
+                                    className="cursor-pointer font-normal"
                                   >
                                     {option.label}
                                   </Label>
@@ -234,7 +224,7 @@ export default function DynamicForm({
                         ) : (
                           <Input
                             {...formField}
-                            value={formField.value as string ?? ''}
+                            value={(formField.value as string) ?? ''}
                             placeholder="Escribí tu respuesta..."
                           />
                         )}
@@ -249,15 +239,10 @@ export default function DynamicForm({
         ))}
 
         <div className="pt-4">
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            disabled={isSubmitting}
-          >
+          <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Guardando...
               </>
             ) : (
