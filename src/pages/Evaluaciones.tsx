@@ -102,7 +102,7 @@ export default function Evaluaciones() {
                         </div>
                       </CardHeader>
                       <CardFooter>
-                        <Link to={`/form/${template.slug}`} className="ml-auto">
+                        <Link to={`/evaluaciones/${template.slug}`} className="ml-auto">
                           <Button variant="default" size="sm" className="gap-2">
                             {isCompleted ? 'Ver' : 'Completar'}
                             <ArrowRight className="h-4 w-4" />
