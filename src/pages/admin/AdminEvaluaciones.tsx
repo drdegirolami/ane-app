@@ -111,7 +111,7 @@ function TemplateSection({ template }: { template: FormTemplate }) {
                   size="icon"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const url = `${window.location.origin}/form/${template.slug}`;
+                    const url = `${window.location.origin}/evaluaciones/${template.slug}`;
                     navigator.clipboard.writeText(url).then(() => {
                       toast.success('Enlace copiado', {
                         description: 'Si el paciente ya completó esta evaluación, al abrirla se le advertirá que sobrescribirá la respuesta anterior.',
