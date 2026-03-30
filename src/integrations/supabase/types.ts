@@ -226,6 +226,27 @@ export type Database = {
         }
         Relationships: []
       }
+      patient_form_access: {
+        Row: {
+          first_accessed_at: string
+          form_slug: string
+          id: string
+          patient_id: string
+        }
+        Insert: {
+          first_accessed_at?: string
+          form_slug: string
+          id?: string
+          patient_id: string
+        }
+        Update: {
+          first_accessed_at?: string
+          form_slug?: string
+          id?: string
+          patient_id?: string
+        }
+        Relationships: []
+      }
       patient_next_steps: {
         Row: {
           available: boolean
