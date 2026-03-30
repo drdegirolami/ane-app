@@ -11,6 +11,7 @@ import DynamicForm from '@/components/forms/DynamicForm';
 import FormReadOnly from '@/components/forms/FormReadOnly';
 import { toast } from 'sonner';
 import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
+import { normalizeFormSchema } from '@/lib/formSchema';
 import { ScoreResult } from '@/types/forms';
 import { useRecordFormAccess } from '@/hooks/usePatientFormAccess';
 
