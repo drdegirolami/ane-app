@@ -62,7 +62,7 @@ export default function Auth() {
       }
     } else {
       toast.success('Sesión iniciada correctamente');
-      navigate('/');
+      navigate(redirectTo);
     }
   };
 
