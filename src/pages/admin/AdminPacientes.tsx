@@ -85,6 +85,14 @@ export default function AdminPacientes() {
   const [patientEvals, setPatientEvals] = useState<PatientEvaluation[]>([]);
   const [loadingEvals, setLoadingEvals] = useState(false);
 
+  // Evaluation detail dialog state
+  const [evalDetailOpen, setEvalDetailOpen] = useState(false);
+  const [evalDetailLoading, setEvalDetailLoading] = useState(false);
+  const [evalDetailData, setEvalDetailData] = useState<{
+    template: { title: string; schema_json: unknown } | null;
+    response: { answers_json: unknown; submitted_at: string; updated_at: string; total_score: number | null } | null;
+  }>({ template: null, response: null });
+
   const fetchPatients = async () => {
     setLoading(true);
     const { data, error } = await supabase
