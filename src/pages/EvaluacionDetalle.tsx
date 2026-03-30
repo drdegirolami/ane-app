@@ -240,7 +240,6 @@ export default function EvaluacionDetalle() {
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 <span>Ya completaste esta evaluación. Si la enviás de nuevo, se sobrescribirá la respuesta anterior.</span>
               </div>
-              </div>
             )}
 
             {/* Dynamic Form */}
