@@ -3,7 +3,7 @@ import { ClipboardList, ArrowRight, Check, Loader2 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useFormTemplates } from '@/hooks/useFormTemplates';
 import { useMyFormResponses } from '@/hooks/useFormResponse';
-import { useMyEnabledForms } from '@/hooks/useMyEnabledForms';
+import { useMyAccessedFormSlugs } from '@/hooks/usePatientFormAccess';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,20 +13,24 @@ import CreateFormDialog from '@/components/forms/CreateFormDialog';
 export default function Evaluaciones() {
   const { isAdmin } = useAuth();
   
-  // Admin: fetch all templates
+  // All templates (used by admin, and patient to resolve accessed slugs)
   const { data: allTemplates, isLoading: isLoadingAll, error: errorAll } = useFormTemplates();
   
-  // Patient: fetch enabled forms via patient_next_steps
-  const { data: enabledForms, isLoading: isLoadingEnabled, error: errorEnabled } = useMyEnabledForms();
+  // Patient: accessed form slugs
+  const { data: accessedSlugs, isLoading: isLoadingAccess } = useMyAccessedFormSlugs();
   
   // Fetch responses to calculate completed status
   const { data: responses } = useMyFormResponses();
 
   const completedTemplateIds = new Set(responses?.map((r) => r.template_id) || []);
 
-  // Choose data source based on role
-  const isLoading = isAdmin ? isLoadingAll : isLoadingEnabled;
-  const error = isAdmin ? errorAll : errorEnabled;
+  // Patient: filter templates to only those accessed via direct link
+  const patientTemplates = !isAdmin
+    ? (allTemplates ?? []).filter(t => accessedSlugs?.includes(t.slug))
+    : [];
+
+  const isLoading = isAdmin ? isLoadingAll : (isLoadingAll || isLoadingAccess);
+  const error = isAdmin ? errorAll : errorAll;
 
   return (
     <AppLayout>
@@ -113,10 +117,10 @@ export default function Evaluaciones() {
           </>
         )}
 
-        {/* Patient view: only enabled forms via patient_next_steps */}
+        {/* Patient view: only forms accessed via direct link */}
         {!isAdmin && !isLoading && !error && (
           <>
-            {enabledForms?.length === 0 ? (
+            {patientTemplates.length === 0 ? (
               <div className="text-center py-12">
                 <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
@@ -125,17 +129,17 @@ export default function Evaluaciones() {
               </div>
             ) : (
               <div className="grid gap-4">
-                {enabledForms?.map((form) => {
-                  const isCompleted = completedTemplateIds.has(form.id);
+                {patientTemplates.map((template) => {
+                  const isCompleted = completedTemplateIds.has(template.id);
 
                   return (
-                    <Card key={form.id} wellness className="hover:scale-[1.01] transition-transform">
+                    <Card key={template.id} wellness className="hover:scale-[1.01] transition-transform">
                       <CardHeader>
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-1">
-                            <CardTitle>{form.displayTitle}</CardTitle>
-                            {form.description && (
-                              <CardDescription>{form.description}</CardDescription>
+                            <CardTitle>{template.title}</CardTitle>
+                            {template.description && (
+                              <CardDescription>{template.description}</CardDescription>
                             )}
                           </div>
                           <Badge
@@ -157,7 +161,7 @@ export default function Evaluaciones() {
                         </div>
                       </CardHeader>
                       <CardFooter>
-                        <Link to={form.url} className="ml-auto">
+                        <Link to={`/evaluaciones/${template.slug}`} className="ml-auto">
                           <Button variant="default" size="sm" className="gap-2">
                             {isCompleted ? 'Ver' : 'Completar'}
                             <ArrowRight className="h-4 w-4" />

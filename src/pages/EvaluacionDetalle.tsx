@@ -12,6 +12,7 @@ import FormReadOnly from '@/components/forms/FormReadOnly';
 import { toast } from 'sonner';
 import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
 import { ScoreResult } from '@/types/forms';
+import { useRecordFormAccess } from '@/hooks/usePatientFormAccess';
 
 // Slugs that are locked after first submission (read-only, no edits)
 const LOCKED_SLUGS = ['baseline_0_2'];
@@ -25,6 +26,9 @@ export default function EvaluacionDetalle() {
   
   const upsertMutation = useUpsertMyFormResponse();
   const { data: nextStepData, isLoading: nextStepLoading } = useMyNextStep();
+  
+  // Record patient access for this form (no-op for admins)
+  useRecordFormAccess(slug);
   const [savedSuccessfully, setSavedSuccessfully] = useState(false);
   const [scoreResult, setScoreResult] = useState<{ score: number; result: ScoreResult } | null>(null);
 
