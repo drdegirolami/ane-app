@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Programa ANE <onboarding@resend.dev>",
+        from: "Programa ANE <info@nutridegirolami.com>",
         to: [recipientEmail],
         subject: templateData.title || "Bienvenido/a al Programa ANE",
         html: fullHtml,
