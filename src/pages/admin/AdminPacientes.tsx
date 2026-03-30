@@ -28,6 +28,7 @@ interface Patient {
   email: string | null;
   status: string | null;
   created_at: string | null;
+  admin_notes: string | null;
 }
 
 interface Checkin {
