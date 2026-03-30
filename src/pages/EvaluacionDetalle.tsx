@@ -11,6 +11,7 @@ import DynamicForm from '@/components/forms/DynamicForm';
 import FormReadOnly from '@/components/forms/FormReadOnly';
 import { toast } from 'sonner';
 import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
+import { normalizeFormSchema } from '@/lib/formSchema';
 import { ScoreResult } from '@/types/forms';
 import { useRecordFormAccess } from '@/hooks/usePatientFormAccess';
 
@@ -53,7 +54,8 @@ export default function EvaluacionDetalle() {
 
       // Si tiene scoring, obtener el resultado
       if (score !== undefined && hasScoringEnabled(schema)) {
-        const result = getScoreResult(schema.scoring!, score);
+        const normalizedSchema = normalizeFormSchema(schema);
+        const result = normalizedSchema.scoring ? getScoreResult(normalizedSchema.scoring, score) : null;
         if (result) {
           setScoreResult({ score, result });
         }
