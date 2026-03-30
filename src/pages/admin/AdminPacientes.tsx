@@ -57,7 +57,7 @@ export default function AdminPacientes() {
   // Profile dialog state
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [editingProfile, setEditingProfile] = useState({ fullName: '', email: '' });
+  const [editingProfile, setEditingProfile] = useState({ fullName: '', email: '', adminNotes: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   
   // Checkins dialog state
