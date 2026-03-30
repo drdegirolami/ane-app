@@ -75,6 +75,11 @@ export default function AdminPacientes() {
   const [checkins, setCheckins] = useState<Checkin[]>([]);
   const [loadingCheckins, setLoadingCheckins] = useState(false);
 
+  // Evaluations dialog state
+  const [evalsDialogOpen, setEvalsDialogOpen] = useState(false);
+  const [patientEvals, setPatientEvals] = useState<PatientEvaluation[]>([]);
+  const [loadingEvals, setLoadingEvals] = useState(false);
+
   const fetchPatients = async () => {
     setLoading(true);
     const { data, error } = await supabase
