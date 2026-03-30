@@ -66,6 +66,23 @@ export default function EvaluacionDetalle() {
 
       setSavedSuccessfully(true);
       toast.success('¡Evaluación guardada correctamente!');
+
+      // Notify admin via email (fire and forget)
+      try {
+        await supabase.functions.invoke('notify-form-completion', {
+          body: {
+            patientName: user?.user_metadata?.full_name || user?.email || 'Paciente',
+            patientEmail: user?.email || '',
+            formTitle: template.title,
+            completedAt: new Date().toLocaleDateString('es-ES', {
+              day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+            }),
+            totalScore: score ?? null,
+          },
+        });
+      } catch (emailErr) {
+        console.error('Error notifying admin:', emailErr);
+      }
     } catch (error) {
       console.error('Error saving response:', error);
       toast.error('Error al guardar la evaluación');
