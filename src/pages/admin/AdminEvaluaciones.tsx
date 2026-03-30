@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Pencil, Trash2, Send, ClipboardCheck, FileText, Play } from 'lucide-react';
+import { Loader2, Eye, Check, Clock, Users, ChevronDown, ChevronUp, Pencil, Trash2, Send, ClipboardCheck, FileText, Play, Link2 } from 'lucide-react';
 import { useAllFormTemplates, usePublishFormTemplate, type FormTemplate } from '@/hooks/useFormTemplates';
 import { useAdminPatientsWithResponses } from '@/hooks/useAdminEvaluaciones';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -27,6 +27,7 @@ import EditFormDialog from '@/components/forms/EditFormDialog';
 import DeleteFormDialog from '@/components/forms/DeleteFormDialog';
 import { FormSchema } from '@/types/forms';
 import { ExportButton, ImportButton } from '@/components/forms/ExportImportButtons';
+import { toast } from 'sonner';
 
 // Helper to check if a template is a test (has scoring enabled)
 function isTestTemplate(template: FormTemplate): boolean {
@@ -105,6 +106,22 @@ function TemplateSection({ template }: { template: FormTemplate }) {
                     <Play className="h-4 w-4" />
                   </Button>
                 </Link>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const url = `${window.location.origin}/form/${template.slug}`;
+                    navigator.clipboard.writeText(url).then(() => {
+                      toast.success('Enlace copiado', {
+                        description: 'Si el paciente ya completó esta evaluación, al abrirla se le advertirá que sobrescribirá la respuesta anterior.',
+                      });
+                    });
+                  }}
+                  title="Copiar enlace"
+                >
+                  <Link2 className="h-4 w-4" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

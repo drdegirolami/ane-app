@@ -236,9 +236,9 @@ export default function EvaluacionDetalle() {
 
             {/* Already completed notice (for editable evaluations) */}
             {existingResponse && !isLockedSlug && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 text-sm border border-amber-500/20">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
-                <span>Ya completaste esta evaluación. Podés editar tus respuestas.</span>
+                <span>Ya completaste esta evaluación. Si la enviás de nuevo, se sobrescribirá la respuesta anterior.</span>
               </div>
             )}
 
