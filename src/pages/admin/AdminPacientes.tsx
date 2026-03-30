@@ -385,6 +385,10 @@ export default function AdminPacientes() {
                             <ClipboardList className="h-4 w-4 mr-2" />
                             Ver check-ins
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEvalsDialog(patient)}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Ver evaluaciones
+                          </DropdownMenuItem>
                           {patientStatus === 'active' ? (
                             <DropdownMenuItem onClick={() => updatePatientStatus(patient.id, 'suspended')}>
                               Suspender acceso
