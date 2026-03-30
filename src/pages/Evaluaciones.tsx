@@ -117,10 +117,10 @@ export default function Evaluaciones() {
           </>
         )}
 
-        {/* Patient view: only enabled forms via patient_next_steps */}
+        {/* Patient view: only forms accessed via direct link */}
         {!isAdmin && !isLoading && !error && (
           <>
-            {enabledForms?.length === 0 ? (
+            {patientTemplates.length === 0 ? (
               <div className="text-center py-12">
                 <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
@@ -129,17 +129,17 @@ export default function Evaluaciones() {
               </div>
             ) : (
               <div className="grid gap-4">
-                {enabledForms?.map((form) => {
-                  const isCompleted = completedTemplateIds.has(form.id);
+                {patientTemplates.map((template) => {
+                  const isCompleted = completedTemplateIds.has(template.id);
 
                   return (
-                    <Card key={form.id} wellness className="hover:scale-[1.01] transition-transform">
+                    <Card key={template.id} wellness className="hover:scale-[1.01] transition-transform">
                       <CardHeader>
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-1">
-                            <CardTitle>{form.displayTitle}</CardTitle>
-                            {form.description && (
-                              <CardDescription>{form.description}</CardDescription>
+                            <CardTitle>{template.title}</CardTitle>
+                            {template.description && (
+                              <CardDescription>{template.description}</CardDescription>
                             )}
                           </div>
                           <Badge
@@ -161,7 +161,7 @@ export default function Evaluaciones() {
                         </div>
                       </CardHeader>
                       <CardFooter>
-                        <Link to={form.url} className="ml-auto">
+                        <Link to={`/evaluaciones/${template.slug}`} className="ml-auto">
                           <Button variant="default" size="sm" className="gap-2">
                             {isCompleted ? 'Ver' : 'Completar'}
                             <ArrowRight className="h-4 w-4" />
