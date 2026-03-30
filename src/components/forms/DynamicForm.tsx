@@ -141,7 +141,7 @@ export default function DynamicForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit, scrollToFirstError)} className="space-y-6">
         {normalizedSchema.sections.map((section, sectionIndex) => (
           <Card key={sectionIndex} wellness>
             <CardHeader>
