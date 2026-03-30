@@ -53,7 +53,8 @@ export default function EvaluacionDetalle() {
 
       // Si tiene scoring, obtener el resultado
       if (score !== undefined && hasScoringEnabled(schema)) {
-        const result = getScoreResult(schema.scoring!, score);
+        const normalizedSchema = normalizeFormSchema(schema);
+        const result = normalizedSchema.scoring ? getScoreResult(normalizedSchema.scoring, score) : null;
         if (result) {
           setScoreResult({ score, result });
         }
