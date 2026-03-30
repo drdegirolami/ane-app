@@ -5,6 +5,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useFormTemplateBySlug, FormSchema } from '@/hooks/useFormTemplates';
 import { useMyFormResponse, useUpsertMyFormResponse } from '@/hooks/useFormResponse';
 import { useMyNextStep } from '@/hooks/useMyNextStep';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import DynamicForm from '@/components/forms/DynamicForm';
@@ -14,6 +15,7 @@ import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
 import { normalizeFormSchema } from '@/lib/formSchema';
 import { ScoreResult } from '@/types/forms';
 import { useRecordFormAccess } from '@/hooks/usePatientFormAccess';
+import { supabase } from '@/integrations/supabase/client';
 
 // Slugs that are locked after first submission (read-only, no edits)
 const LOCKED_SLUGS = ['baseline_0_2'];
