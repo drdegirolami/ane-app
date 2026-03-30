@@ -606,6 +606,62 @@ export default function AdminPacientes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Evaluations Dialog */}
+      <Dialog open={evalsDialogOpen} onOpenChange={setEvalsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Evaluaciones de {selectedPatient?.full_name || 'Paciente'}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {loadingEvals ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : patientEvals.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Este paciente no ha completado evaluaciones
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {patientEvals.map((ev, idx) => (
+                  <Card key={idx} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <p className="font-medium text-foreground">{ev.template_title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(ev.submitted_at).toLocaleDateString('es-ES', {
+                            day: 'numeric', month: 'long', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit',
+                          })}
+                        </p>
+                        {ev.total_score !== null && (
+                          <p className="text-sm font-medium text-primary">
+                            Puntaje: {ev.total_score}
+                          </p>
+                        )}
+                      </div>
+                      {ev.template_slug && (
+                        <a href={`/admin/evaluaciones/${ev.template_slug}/${selectedPatient?.user_id}`}>
+                          <Button variant="outline" size="sm" className="gap-1">
+                            <Eye className="h-4 w-4" />
+                            Ver
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEvalsDialogOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
