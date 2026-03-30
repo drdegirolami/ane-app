@@ -42,6 +42,14 @@ interface Checkin {
   adjustments_needed: string | null;
 }
 
+interface PatientEvaluation {
+  template_id: string;
+  template_title: string;
+  template_slug: string;
+  submitted_at: string;
+  total_score: number | null;
+}
+
 const statusConfig = {
   active: { label: 'Activo', icon: CheckCircle, color: 'text-green-500 bg-green-500/10' },
   suspended: { label: 'Suspendido', icon: XCircle, color: 'text-red-500 bg-red-500/10' },
