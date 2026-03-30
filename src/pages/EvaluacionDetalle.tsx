@@ -5,6 +5,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import { useFormTemplateBySlug, FormSchema } from '@/hooks/useFormTemplates';
 import { useMyFormResponse, useUpsertMyFormResponse } from '@/hooks/useFormResponse';
 import { useMyNextStep } from '@/hooks/useMyNextStep';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import DynamicForm from '@/components/forms/DynamicForm';
@@ -14,12 +15,14 @@ import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
 import { normalizeFormSchema } from '@/lib/formSchema';
 import { ScoreResult } from '@/types/forms';
 import { useRecordFormAccess } from '@/hooks/usePatientFormAccess';
+import { supabase } from '@/integrations/supabase/client';
 
 // Slugs that are locked after first submission (read-only, no edits)
 const LOCKED_SLUGS = ['baseline_0_2'];
 
 export default function EvaluacionDetalle() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const { data: template, isLoading: loadingTemplate, error: templateError } = useFormTemplateBySlug(slug ?? '');
   
   const templateId = template?.id ?? '';
@@ -63,6 +66,23 @@ export default function EvaluacionDetalle() {
 
       setSavedSuccessfully(true);
       toast.success('¡Evaluación guardada correctamente!');
+
+      // Notify admin via email (fire and forget)
+      try {
+        await supabase.functions.invoke('notify-form-completion', {
+          body: {
+            patientName: user?.user_metadata?.full_name || user?.email || 'Paciente',
+            patientEmail: user?.email || '',
+            formTitle: template.title,
+            completedAt: new Date().toLocaleDateString('es-ES', {
+              day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+            }),
+            totalScore: score ?? null,
+          },
+        });
+      } catch (emailErr) {
+        console.error('Error notifying admin:', emailErr);
+      }
     } catch (error) {
       console.error('Error saving response:', error);
       toast.error('Error al guardar la evaluación');

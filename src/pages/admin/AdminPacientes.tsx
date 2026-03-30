@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock, Loader2, User, ClipboardList } from 'lucide-react';
+import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock, Loader2, User, ClipboardList, FileText, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,14 @@ interface Checkin {
   adjustments_needed: string | null;
 }
 
+interface PatientEvaluation {
+  template_id: string;
+  template_title: string;
+  template_slug: string;
+  submitted_at: string;
+  total_score: number | null;
+}
+
 const statusConfig = {
   active: { label: 'Activo', icon: CheckCircle, color: 'text-green-500 bg-green-500/10' },
   suspended: { label: 'Suspendido', icon: XCircle, color: 'text-red-500 bg-red-500/10' },
@@ -66,6 +74,11 @@ export default function AdminPacientes() {
   const [checkinsDialogOpen, setCheckinsDialogOpen] = useState(false);
   const [checkins, setCheckins] = useState<Checkin[]>([]);
   const [loadingCheckins, setLoadingCheckins] = useState(false);
+
+  // Evaluations dialog state
+  const [evalsDialogOpen, setEvalsDialogOpen] = useState(false);
+  const [patientEvals, setPatientEvals] = useState<PatientEvaluation[]>([]);
+  const [loadingEvals, setLoadingEvals] = useState(false);
 
   const fetchPatients = async () => {
     setLoading(true);
@@ -214,6 +227,50 @@ export default function AdminPacientes() {
     setLoadingCheckins(false);
   };
 
+  const openEvalsDialog = async (patient: Patient) => {
+    setSelectedPatient(patient);
+    setEvalsDialogOpen(true);
+    setLoadingEvals(true);
+
+    // Fetch responses with template info
+    const { data: responses, error: respError } = await supabase
+      .from('form_responses')
+      .select('template_id, submitted_at, total_score')
+      .eq('patient_id', patient.user_id)
+      .order('submitted_at', { ascending: false });
+
+    if (respError) {
+      toast.error('Error al cargar evaluaciones');
+      console.error(respError);
+      setLoadingEvals(false);
+      return;
+    }
+
+    if (!responses || responses.length === 0) {
+      setPatientEvals([]);
+      setLoadingEvals(false);
+      return;
+    }
+
+    // Fetch template titles
+    const templateIds = [...new Set(responses.map(r => r.template_id))];
+    const { data: templates } = await supabase
+      .from('form_templates')
+      .select('id, title, slug')
+      .in('id', templateIds);
+
+    const templateMap = new Map(templates?.map(t => [t.id, t]) || []);
+
+    setPatientEvals(responses.map(r => ({
+      template_id: r.template_id,
+      template_title: templateMap.get(r.template_id)?.title || 'Sin título',
+      template_slug: templateMap.get(r.template_id)?.slug || '',
+      submitted_at: r.submitted_at,
+      total_score: r.total_score,
+    })));
+    setLoadingEvals(false);
+  };
+
   const deletePatient = async (patientId: string, patientName: string) => {
     const confirmed = window.confirm(`¿Estás seguro de dar de baja a ${patientName}?`);
     if (!confirmed) return;
@@ -327,6 +384,10 @@ export default function AdminPacientes() {
                           <DropdownMenuItem onClick={() => openCheckinsDialog(patient)}>
                             <ClipboardList className="h-4 w-4 mr-2" />
                             Ver check-ins
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEvalsDialog(patient)}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Ver evaluaciones
                           </DropdownMenuItem>
                           {patientStatus === 'active' ? (
                             <DropdownMenuItem onClick={() => updatePatientStatus(patient.id, 'suspended')}>
@@ -540,6 +601,62 @@ export default function AdminPacientes() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCheckinsDialogOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Evaluations Dialog */}
+      <Dialog open={evalsDialogOpen} onOpenChange={setEvalsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Evaluaciones de {selectedPatient?.full_name || 'Paciente'}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {loadingEvals ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : patientEvals.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Este paciente no ha completado evaluaciones
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {patientEvals.map((ev, idx) => (
+                  <Card key={idx} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <p className="font-medium text-foreground">{ev.template_title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(ev.submitted_at).toLocaleDateString('es-ES', {
+                            day: 'numeric', month: 'long', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit',
+                          })}
+                        </p>
+                        {ev.total_score !== null && (
+                          <p className="text-sm font-medium text-primary">
+                            Puntaje: {ev.total_score}
+                          </p>
+                        )}
+                      </div>
+                      {ev.template_slug && (
+                        <a href={`/admin/evaluaciones/${ev.template_slug}/${selectedPatient?.user_id}`}>
+                          <Button variant="outline" size="sm" className="gap-1">
+                            <Eye className="h-4 w-4" />
+                            Ver
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEvalsDialogOpen(false)}>
               Cerrar
             </Button>
           </DialogFooter>
