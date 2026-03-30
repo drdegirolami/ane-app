@@ -38,6 +38,7 @@ import {
 import type { FormTemplate } from '@/hooks/useFormTemplates';
 import { useUpdateFormTemplate } from '@/hooks/useFormTemplates';
 import type { FormSchema, FormField as FormFieldType, FormFieldOption, ScoreResult } from '@/types/forms';
+import { normalizeFormSchema } from '@/lib/formSchema';
 
 const formSchema = z.object({
   title: z.string().min(1, 'El título es requerido'),
@@ -80,10 +81,10 @@ export default function EditFormDialog({ template, open, onOpenChange }: EditFor
       form.setValue('title', template.title);
       form.setValue('description', template.description || '');
 
-      const schema = template.schema_json as unknown as FormSchema;
+      const schema = normalizeFormSchema(template.schema_json as unknown as FormSchema);
 
       // Load fields from sections
-      const loadedFields: FieldDefinition[] = schema.sections.flatMap((section) =>
+      const loadedFields: FieldDefinition[] = (schema.sections ?? []).flatMap((section) =>
         section.fields.map((field) => ({
           key: field.key,
           label: field.label,
