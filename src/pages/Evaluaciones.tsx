@@ -3,7 +3,7 @@ import { ClipboardList, ArrowRight, Check, Loader2 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import { useFormTemplates } from '@/hooks/useFormTemplates';
 import { useMyFormResponses } from '@/hooks/useFormResponse';
-import { useMyEnabledForms } from '@/hooks/useMyEnabledForms';
+import { useMyAccessedFormSlugs } from '@/hooks/usePatientFormAccess';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,20 +13,24 @@ import CreateFormDialog from '@/components/forms/CreateFormDialog';
 export default function Evaluaciones() {
   const { isAdmin } = useAuth();
   
-  // Admin: fetch all templates
+  // All templates (used by admin, and patient to resolve accessed slugs)
   const { data: allTemplates, isLoading: isLoadingAll, error: errorAll } = useFormTemplates();
   
-  // Patient: fetch enabled forms via patient_next_steps
-  const { data: enabledForms, isLoading: isLoadingEnabled, error: errorEnabled } = useMyEnabledForms();
+  // Patient: accessed form slugs
+  const { data: accessedSlugs, isLoading: isLoadingAccess } = useMyAccessedFormSlugs();
   
   // Fetch responses to calculate completed status
   const { data: responses } = useMyFormResponses();
 
   const completedTemplateIds = new Set(responses?.map((r) => r.template_id) || []);
 
-  // Choose data source based on role
-  const isLoading = isAdmin ? isLoadingAll : isLoadingEnabled;
-  const error = isAdmin ? errorAll : errorEnabled;
+  // Patient: filter templates to only those accessed via direct link
+  const patientTemplates = !isAdmin
+    ? (allTemplates ?? []).filter(t => accessedSlugs?.includes(t.slug))
+    : [];
+
+  const isLoading = isAdmin ? isLoadingAll : (isLoadingAll || isLoadingAccess);
+  const error = isAdmin ? errorAll : errorAll;
 
   return (
     <AppLayout>
