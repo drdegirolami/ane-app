@@ -111,6 +111,22 @@ function TemplateSection({ template }: { template: FormTemplate }) {
                   size="icon"
                   onClick={(e) => {
                     e.stopPropagation();
+                    const url = `${window.location.origin}/form/${template.slug}`;
+                    navigator.clipboard.writeText(url).then(() => {
+                      toast.success('Enlace copiado', {
+                        description: 'Si el paciente ya completó esta evaluación, al abrirla se le advertirá que sobrescribirá la respuesta anterior.',
+                      });
+                    });
+                  }}
+                  title="Copiar enlace"
+                >
+                  <Link2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setEditOpen(true);
                   }}
                   title="Editar"
