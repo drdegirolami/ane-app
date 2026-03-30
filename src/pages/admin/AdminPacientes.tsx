@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock, Loader2, User, ClipboardList, FileText, Eye } from 'lucide-react';
+import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock, Loader2, User, ClipboardList, FileText, Eye, Trophy } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +21,11 @@ import {
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import FormReadOnly from '@/components/forms/FormReadOnly';
+import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
+import { normalizeFormSchema } from '@/lib/formSchema';
+import { FormSchema } from '@/hooks/useFormTemplates';
 
 interface Patient {
   id: string;
@@ -80,6 +84,14 @@ export default function AdminPacientes() {
   const [evalsDialogOpen, setEvalsDialogOpen] = useState(false);
   const [patientEvals, setPatientEvals] = useState<PatientEvaluation[]>([]);
   const [loadingEvals, setLoadingEvals] = useState(false);
+
+  // Evaluation detail dialog state
+  const [evalDetailOpen, setEvalDetailOpen] = useState(false);
+  const [evalDetailLoading, setEvalDetailLoading] = useState(false);
+  const [evalDetailData, setEvalDetailData] = useState<{
+    template: { title: string; schema_json: unknown } | null;
+    response: { answers_json: unknown; submitted_at: string; updated_at: string; total_score: number | null } | null;
+  }>({ template: null, response: null });
 
   const fetchPatients = async () => {
     setLoading(true);
@@ -270,6 +282,26 @@ export default function AdminPacientes() {
       total_score: r.total_score,
     })));
     setLoadingEvals(false);
+  };
+
+  const openEvalDetail = async (ev: PatientEvaluation) => {
+    setEvalDetailOpen(true);
+    setEvalDetailLoading(true);
+    setEvalDetailData({ template: null, response: null });
+
+    const [templateRes, responseRes] = await Promise.all([
+      supabase.from('form_templates').select('title, schema_json').eq('id', ev.template_id).single(),
+      supabase.from('form_responses').select('answers_json, submitted_at, updated_at, total_score')
+        .eq('template_id', ev.template_id)
+        .eq('patient_id', selectedPatient?.user_id ?? '')
+        .single(),
+    ]);
+
+    setEvalDetailData({
+      template: templateRes.data,
+      response: responseRes.data,
+    });
+    setEvalDetailLoading(false);
   };
 
   const deletePatient = async (patientId: string, patientName: string) => {
@@ -643,12 +675,10 @@ export default function AdminPacientes() {
                         )}
                       </div>
                       {ev.template_slug && (
-                        <Link to={`/admin/evaluaciones/${ev.template_slug}/${selectedPatient?.user_id}`}>
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <Eye className="h-4 w-4" />
-                            Ver
-                          </Button>
-                        </Link>
+                        <Button variant="outline" size="sm" className="gap-1" onClick={() => openEvalDetail(ev)}>
+                          <Eye className="h-4 w-4" />
+                          Ver
+                        </Button>
                       )}
                     </div>
                   </Card>
@@ -658,6 +688,70 @@ export default function AdminPacientes() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEvalsDialogOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Evaluation Detail Dialog */}
+      <Dialog open={evalDetailOpen} onOpenChange={setEvalDetailOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{evalDetailData.template?.title || 'Detalle de evaluación'}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {evalDetailLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : !evalDetailData.response ? (
+              <p className="text-center text-muted-foreground py-8">Sin respuesta encontrada</p>
+            ) : (() => {
+              const schema = evalDetailData.template?.schema_json as unknown as FormSchema | null;
+              const answers = evalDetailData.response.answers_json as Record<string, unknown>;
+              const totalScore = evalDetailData.response.total_score;
+
+              return (
+                <>
+                  {/* Score result */}
+                  {totalScore !== null && schema && hasScoringEnabled(schema) && (() => {
+                    const normalized = normalizeFormSchema(schema);
+                    const result = normalized.scoring ? getScoreResult(normalized.scoring, totalScore!) : null;
+                    return result ? (
+                      <Card className="border-primary/20 bg-primary/5">
+                        <CardContent className="pt-4 space-y-2">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Trophy className="h-5 w-5 text-primary" />
+                            <span className="font-semibold text-foreground">Resultado del test</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge className="text-sm px-3 py-1">Puntaje: {totalScore}</Badge>
+                            <span className="font-semibold text-foreground">{result.result_title}</span>
+                          </div>
+                          {result.result_text && (
+                            <p className="text-sm text-muted-foreground whitespace-pre-line">{result.result_text}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ) : totalScore !== null ? (
+                      <Card>
+                        <CardContent className="pt-4 flex items-center gap-2">
+                          <Trophy className="h-5 w-5 text-primary" />
+                          <span className="font-medium">Puntaje total: {totalScore}</span>
+                        </CardContent>
+                      </Card>
+                    ) : null;
+                  })()}
+
+                  {/* Answers */}
+                  {schema && <FormReadOnly schema={schema} answers={answers} />}
+                </>
+              );
+            })()}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEvalDetailOpen(false)}>
               Cerrar
             </Button>
           </DialogFooter>
