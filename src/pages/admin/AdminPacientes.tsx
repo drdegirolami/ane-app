@@ -674,12 +674,10 @@ export default function AdminPacientes() {
                         )}
                       </div>
                       {ev.template_slug && (
-                        <Link to={`/admin/evaluaciones/${ev.template_slug}/${selectedPatient?.user_id}`}>
-                          <Button variant="outline" size="sm" className="gap-1">
-                            <Eye className="h-4 w-4" />
-                            Ver
-                          </Button>
-                        </Link>
+                        <Button variant="outline" size="sm" className="gap-1" onClick={() => openEvalDetail(ev)}>
+                          <Eye className="h-4 w-4" />
+                          Ver
+                        </Button>
                       )}
                     </div>
                   </Card>
