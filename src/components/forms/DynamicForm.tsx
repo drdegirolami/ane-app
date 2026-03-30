@@ -156,8 +156,8 @@ export default function DynamicForm({
                   key={field.key}
                   control={form.control}
                   name={field.key}
-                  render={({ field: formField }) => (
-                    <FormItem>
+                  render={({ field: formField, fieldState }) => (
+                    <FormItem data-field-error={fieldState.error ? 'true' : undefined}>
                       <Label className="flex items-start gap-1">
                         {field.label}
                         {field.required && <span className="text-destructive">*</span>}
