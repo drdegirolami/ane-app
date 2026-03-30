@@ -114,6 +114,15 @@ export default function DynamicForm({
     defaultValues,
   });
 
+  const scrollToFirstError = () => {
+    setTimeout(() => {
+      const firstError = document.querySelector('[data-field-error="true"]');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+
   const handleSubmit = (values: Record<string, unknown>) => {
     const cleanedValues: Record<string, unknown> = {};
     Object.entries(values).forEach(([key, value]) => {
@@ -132,7 +141,7 @@ export default function DynamicForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit, scrollToFirstError)} className="space-y-6">
         {normalizedSchema.sections.map((section, sectionIndex) => (
           <Card key={sectionIndex} wellness>
             <CardHeader>
@@ -147,8 +156,8 @@ export default function DynamicForm({
                   key={field.key}
                   control={form.control}
                   name={field.key}
-                  render={({ field: formField }) => (
-                    <FormItem>
+                  render={({ field: formField, fieldState }) => (
+                    <FormItem data-field-error={fieldState.error ? 'true' : undefined}>
                       <Label className="flex items-start gap-1">
                         {field.label}
                         {field.required && <span className="text-destructive">*</span>}
