@@ -1,13 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, FileQuestion, User } from 'lucide-react';
+import { ArrowLeft, Loader2, FileQuestion, User, Trophy } from 'lucide-react';
 import { useFormTemplateBySlug, FormSchema } from '@/hooks/useFormTemplates';
 import { useAdminPatientResponse, useAdminPatientProfile } from '@/hooks/useAdminEvaluaciones';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import FormReadOnly from '@/components/forms/FormReadOnly';
+import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
+import { normalizeFormSchema } from '@/lib/formSchema';
 
 export default function AdminEvaluacionPaciente() {
   const { slug, patientId } = useParams<{ slug: string; patientId: string }>();
