@@ -178,6 +178,7 @@ export default function AdminPacientes() {
       .update({
         full_name: editingProfile.fullName,
         email: editingProfile.email,
+        admin_notes: editingProfile.adminNotes,
       })
       .eq('id', selectedPatient.id);
 
