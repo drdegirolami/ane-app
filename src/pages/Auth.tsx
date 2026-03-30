@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 
 export default function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as { from?: string })?.from || '/';
   const { user, signIn, signUp, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
