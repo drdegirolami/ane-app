@@ -312,6 +312,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admin_notes: string | null
           created_at: string | null
           email: string | null
           full_name: string | null
@@ -321,6 +322,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_notes?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
@@ -330,6 +332,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_notes?: string | null
           created_at?: string | null
           email?: string | null
           full_name?: string | null
