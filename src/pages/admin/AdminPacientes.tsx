@@ -445,6 +445,17 @@ export default function AdminPacientes() {
                 }
               </p>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="adminNotes">Notas privadas del administrador</Label>
+              <Textarea
+                id="adminNotes"
+                placeholder="Escribe aquí notas privadas sobre este paciente..."
+                value={editingProfile.adminNotes}
+                onChange={(e) => setEditingProfile({ ...editingProfile, adminNotes: e.target.value })}
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">Solo visible para administradores</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setProfileDialogOpen(false)}>
