@@ -643,12 +643,12 @@ export default function AdminPacientes() {
                         )}
                       </div>
                       {ev.template_slug && (
-                        <a href={`/admin/evaluaciones/${ev.template_slug}/${selectedPatient?.user_id}`}>
+                        <Link to={`/admin/evaluaciones/${ev.template_slug}/${selectedPatient?.user_id}`}>
                           <Button variant="outline" size="sm" className="gap-1">
                             <Eye className="h-4 w-4" />
                             Ver
                           </Button>
-                        </a>
+                        </Link>
                       )}
                     </div>
                   </Card>
