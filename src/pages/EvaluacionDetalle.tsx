@@ -22,6 +22,7 @@ const LOCKED_SLUGS = ['baseline_0_2'];
 
 export default function EvaluacionDetalle() {
   const { slug } = useParams<{ slug: string }>();
+  const { user } = useAuth();
   const { data: template, isLoading: loadingTemplate, error: templateError } = useFormTemplateBySlug(slug ?? '');
   
   const templateId = template?.id ?? '';
