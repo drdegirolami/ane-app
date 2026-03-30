@@ -13,6 +13,8 @@ const BodySchema = z.object({
   formTitle: z.string(),
   completedAt: z.string(),
   totalScore: z.number().nullable().optional(),
+  resultTitle: z.string().nullable().optional(),
+  resultText: z.string().nullable().optional(),
 });
 
 const ADMIN_EMAIL = "degirolami@gmail.com";
