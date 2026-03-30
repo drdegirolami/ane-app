@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 
 export default function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = (location.state as { from?: string })?.from || '/';
   const { user, signIn, signUp, isLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -36,9 +38,9 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !isLoading) {
-      navigate('/');
+      navigate(redirectTo);
     }
-  }, [user, isLoading, navigate]);
+  }, [user, isLoading, navigate, redirectTo]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +62,7 @@ export default function Auth() {
       }
     } else {
       toast.success('Sesión iniciada correctamente');
-      navigate('/');
+      navigate(redirectTo);
     }
   };
 
