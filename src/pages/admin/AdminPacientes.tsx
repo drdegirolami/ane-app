@@ -284,7 +284,26 @@ export default function AdminPacientes() {
     setLoadingEvals(false);
   };
 
-  const deletePatient = async (patientId: string, patientName: string) => {
+  const openEvalDetail = async (ev: PatientEvaluation) => {
+    setEvalDetailOpen(true);
+    setEvalDetailLoading(true);
+    setEvalDetailData({ template: null, response: null });
+
+    const [templateRes, responseRes] = await Promise.all([
+      supabase.from('form_templates').select('title, schema_json').eq('id', ev.template_id).single(),
+      supabase.from('form_responses').select('answers_json, submitted_at, updated_at, total_score')
+        .eq('template_id', ev.template_id)
+        .eq('patient_id', selectedPatient?.user_id ?? '')
+        .single(),
+    ]);
+
+    setEvalDetailData({
+      template: templateRes.data,
+      response: responseRes.data,
+    });
+    setEvalDetailLoading(false);
+  };
+
     const confirmed = window.confirm(`¿Estás seguro de dar de baja a ${patientName}?`);
     if (!confirmed) return;
 
