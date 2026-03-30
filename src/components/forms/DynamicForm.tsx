@@ -114,6 +114,15 @@ export default function DynamicForm({
     defaultValues,
   });
 
+  const scrollToFirstError = () => {
+    setTimeout(() => {
+      const firstError = document.querySelector('[data-field-error="true"]');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+
   const handleSubmit = (values: Record<string, unknown>) => {
     const cleanedValues: Record<string, unknown> = {};
     Object.entries(values).forEach(([key, value]) => {
