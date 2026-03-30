@@ -113,6 +113,29 @@ export default function AdminPacientes() {
       console.error(error);
     } else {
       toast.success('Paciente creado correctamente');
+      
+      // Send welcome email
+      try {
+        const appUrl = window.location.origin;
+        const { error: emailError } = await supabase.functions.invoke('send-welcome-email', {
+          body: {
+            recipientEmail: newPatient.email,
+            recipientName: newPatient.fullName,
+            password: newPatient.password,
+            appUrl,
+          },
+        });
+        if (emailError) {
+          console.error('Error sending welcome email:', emailError);
+          toast.error('Paciente creado, pero hubo un error al enviar el email de bienvenida');
+        } else {
+          toast.success('Email de bienvenida enviado');
+        }
+      } catch (emailErr) {
+        console.error('Error sending welcome email:', emailErr);
+        toast.error('Paciente creado, pero no se pudo enviar el email');
+      }
+      
       setDialogOpen(false);
       setNewPatient({ email: '', password: '', fullName: '' });
       setTimeout(fetchPatients, 1000);

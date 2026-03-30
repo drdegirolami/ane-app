@@ -24,6 +24,7 @@ const screenLabels: Record<string, string> = {
   'situaciones': 'Situaciones',
   'mensaje': 'Mensaje',
   'info': 'Información',
+  'email_bienvenida': 'Email de Bienvenida',
 };
 
 export default function AdminAjustes() {
