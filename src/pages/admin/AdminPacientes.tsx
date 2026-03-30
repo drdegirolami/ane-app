@@ -21,6 +21,11 @@ import {
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import FormReadOnly from '@/components/forms/FormReadOnly';
+import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
+import { normalizeFormSchema } from '@/lib/formSchema';
+import { FormSchema } from '@/hooks/useFormTemplates';
 
 interface Patient {
   id: string;
