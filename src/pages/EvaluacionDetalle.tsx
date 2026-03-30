@@ -79,6 +79,8 @@ export default function EvaluacionDetalle() {
               day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
             }),
             totalScore: score ?? null,
+            resultTitle: resultForEmail?.result.result_title ?? null,
+            resultText: resultForEmail?.result.result_text ?? null,
           },
         });
       } catch (emailErr) {
