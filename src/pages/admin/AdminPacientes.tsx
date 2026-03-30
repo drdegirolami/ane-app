@@ -164,6 +164,7 @@ export default function AdminPacientes() {
     setEditingProfile({
       fullName: patient.full_name || '',
       email: patient.email || '',
+      adminNotes: patient.admin_notes || '',
     });
     setProfileDialogOpen(true);
   };
