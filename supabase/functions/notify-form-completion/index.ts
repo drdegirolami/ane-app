@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
       <tr><td style="padding:8px 12px;color:#6b7280;font-size:14px;">Email</td><td style="padding:8px 12px;font-size:14px;color:#2d3b2e;">${patientEmail}</td></tr>
       <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;font-size:14px;">Evaluación</td><td style="padding:8px 12px;font-size:14px;font-weight:600;color:#2d3b2e;">${formTitle}</td></tr>
       ${scoreHtml}
+      ${resultHtml}
       <tr><td style="padding:8px 12px;color:#6b7280;font-size:14px;">Fecha</td><td style="padding:8px 12px;font-size:14px;color:#2d3b2e;">${completedAt}</td></tr>
     </table>
   </div>
