@@ -1,13 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, FileQuestion, User } from 'lucide-react';
+import { ArrowLeft, Loader2, FileQuestion, User, Trophy } from 'lucide-react';
 import { useFormTemplateBySlug, FormSchema } from '@/hooks/useFormTemplates';
 import { useAdminPatientResponse, useAdminPatientProfile } from '@/hooks/useAdminEvaluaciones';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import FormReadOnly from '@/components/forms/FormReadOnly';
+import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
+import { normalizeFormSchema } from '@/lib/formSchema';
 
 export default function AdminEvaluacionPaciente() {
   const { slug, patientId } = useParams<{ slug: string; patientId: string }>();
@@ -121,6 +123,40 @@ export default function AdminEvaluacionPaciente() {
                   </>
                 )}
               </div>
+
+              {/* Score result for tests */}
+              {response.total_score !== null && schema && hasScoringEnabled(schema) && (() => {
+                const normalized = normalizeFormSchema(schema);
+                const result = normalized.scoring ? getScoreResult(normalized.scoring, response.total_score!) : null;
+                return result ? (
+                  <Card className="border-primary/20 bg-primary/5">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-5 w-5 text-primary" />
+                        <CardTitle className="text-lg">Resultado del test</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <Badge className="text-sm px-3 py-1">Puntaje: {response.total_score}</Badge>
+                        <span className="font-semibold text-foreground">{result.result_title}</span>
+                      </div>
+                      {result.result_text && (
+                        <p className="text-sm text-muted-foreground whitespace-pre-line">{result.result_text}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Puntaje total: {response.total_score}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
 
               {/* Reusable read-only form */}
               <FormReadOnly schema={schema} answers={answers} />
