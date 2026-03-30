@@ -227,6 +227,50 @@ export default function AdminPacientes() {
     setLoadingCheckins(false);
   };
 
+  const openEvalsDialog = async (patient: Patient) => {
+    setSelectedPatient(patient);
+    setEvalsDialogOpen(true);
+    setLoadingEvals(true);
+
+    // Fetch responses with template info
+    const { data: responses, error: respError } = await supabase
+      .from('form_responses')
+      .select('template_id, submitted_at, total_score')
+      .eq('patient_id', patient.user_id)
+      .order('submitted_at', { ascending: false });
+
+    if (respError) {
+      toast.error('Error al cargar evaluaciones');
+      console.error(respError);
+      setLoadingEvals(false);
+      return;
+    }
+
+    if (!responses || responses.length === 0) {
+      setPatientEvals([]);
+      setLoadingEvals(false);
+      return;
+    }
+
+    // Fetch template titles
+    const templateIds = [...new Set(responses.map(r => r.template_id))];
+    const { data: templates } = await supabase
+      .from('form_templates')
+      .select('id, title, slug')
+      .in('id', templateIds);
+
+    const templateMap = new Map(templates?.map(t => [t.id, t]) || []);
+
+    setPatientEvals(responses.map(r => ({
+      template_id: r.template_id,
+      template_title: templateMap.get(r.template_id)?.title || 'Sin título',
+      template_slug: templateMap.get(r.template_id)?.slug || '',
+      submitted_at: r.submitted_at,
+      total_score: r.total_score,
+    })));
+    setLoadingEvals(false);
+  };
+
   const deletePatient = async (patientId: string, patientName: string) => {
     const confirmed = window.confirm(`¿Estás seguro de dar de baja a ${patientName}?`);
     if (!confirmed) return;
