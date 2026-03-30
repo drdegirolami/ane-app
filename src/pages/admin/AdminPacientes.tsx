@@ -692,6 +692,70 @@ export default function AdminPacientes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Evaluation Detail Dialog */}
+      <Dialog open={evalDetailOpen} onOpenChange={setEvalDetailOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{evalDetailData.template?.title || 'Detalle de evaluación'}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {evalDetailLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : !evalDetailData.response ? (
+              <p className="text-center text-muted-foreground py-8">Sin respuesta encontrada</p>
+            ) : (() => {
+              const schema = evalDetailData.template?.schema_json as unknown as FormSchema | null;
+              const answers = evalDetailData.response.answers_json as Record<string, unknown>;
+              const totalScore = evalDetailData.response.total_score;
+
+              return (
+                <>
+                  {/* Score result */}
+                  {totalScore !== null && schema && hasScoringEnabled(schema) && (() => {
+                    const normalized = normalizeFormSchema(schema);
+                    const result = normalized.scoring ? getScoreResult(normalized.scoring, totalScore!) : null;
+                    return result ? (
+                      <Card className="border-primary/20 bg-primary/5">
+                        <CardContent className="pt-4 space-y-2">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Trophy className="h-5 w-5 text-primary" />
+                            <span className="font-semibold text-foreground">Resultado del test</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Badge className="text-sm px-3 py-1">Puntaje: {totalScore}</Badge>
+                            <span className="font-semibold text-foreground">{result.result_title}</span>
+                          </div>
+                          {result.result_text && (
+                            <p className="text-sm text-muted-foreground whitespace-pre-line">{result.result_text}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ) : totalScore !== null ? (
+                      <Card>
+                        <CardContent className="pt-4 flex items-center gap-2">
+                          <Trophy className="h-5 w-5 text-primary" />
+                          <span className="font-medium">Puntaje total: {totalScore}</span>
+                        </CardContent>
+                      </Card>
+                    ) : null;
+                  })()}
+
+                  {/* Answers */}
+                  {schema && <FormReadOnly schema={schema} answers={answers} />}
+                </>
+              );
+            })()}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEvalDetailOpen(false)}>
+              Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
