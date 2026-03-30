@@ -245,6 +245,13 @@ function TemplateListSection({
   emptyMessage: string;
   createButton: React.ReactNode;
 }) {
+  const [sortAlpha, setSortAlpha] = useState(false);
+
+  const sortedTemplates = useMemo(() => {
+    if (!sortAlpha) return templates;
+    return [...templates].sort((a, b) => a.title.localeCompare(b.title, 'es'));
+  }, [templates, sortAlpha]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-4">
@@ -257,12 +264,22 @@ function TemplateListSection({
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
         </div>
-        {createButton}
+        <div className="flex items-center gap-2">
+          <Button
+            variant={sortAlpha ? "secondary" : "ghost"}
+            size="icon"
+            onClick={() => setSortAlpha(!sortAlpha)}
+            title={sortAlpha ? "Orden original" : "Ordenar A-Z"}
+          >
+            {sortAlpha ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownAZ className="h-4 w-4" />}
+          </Button>
+          {createButton}
+        </div>
       </div>
 
-      {templates.length > 0 ? (
+      {sortedTemplates.length > 0 ? (
         <div className="space-y-3">
-          {templates.map((template) => (
+          {sortedTemplates.map((template) => (
             <TemplateSection key={template.id} template={template} />
           ))}
         </div>
