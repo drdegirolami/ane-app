@@ -304,6 +304,7 @@ export default function AdminPacientes() {
     setEvalDetailLoading(false);
   };
 
+  const deletePatient = async (patientId: string, patientName: string) => {
     const confirmed = window.confirm(`¿Estás seguro de dar de baja a ${patientName}?`);
     if (!confirmed) return;
 
