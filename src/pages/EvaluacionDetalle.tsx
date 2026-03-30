@@ -26,6 +26,9 @@ export default function EvaluacionDetalle() {
   
   const upsertMutation = useUpsertMyFormResponse();
   const { data: nextStepData, isLoading: nextStepLoading } = useMyNextStep();
+  
+  // Record patient access for this form (no-op for admins)
+  useRecordFormAccess(slug);
   const [savedSuccessfully, setSavedSuccessfully] = useState(false);
   const [scoreResult, setScoreResult] = useState<{ score: number; result: ScoreResult } | null>(null);
 
