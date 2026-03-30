@@ -55,12 +55,13 @@ export default function EvaluacionDetalle() {
         totalScore: score,
       });
 
-      // Si tiene scoring, obtener el resultado
+      let resultForEmail: { score: number; result: ScoreResult } | null = null;
       if (score !== undefined && hasScoringEnabled(schema)) {
         const normalizedSchema = normalizeFormSchema(schema);
         const result = normalizedSchema.scoring ? getScoreResult(normalizedSchema.scoring, score) : null;
         if (result) {
-          setScoreResult({ score, result });
+          resultForEmail = { score, result };
+          setScoreResult(resultForEmail);
         }
       }
 
@@ -78,6 +79,8 @@ export default function EvaluacionDetalle() {
               day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
             }),
             totalScore: score ?? null,
+            resultTitle: resultForEmail?.result.result_title ?? null,
+            resultText: resultForEmail?.result.result_text ?? null,
           },
         });
       } catch (emailErr) {

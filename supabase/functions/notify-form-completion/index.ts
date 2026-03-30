@@ -13,6 +13,8 @@ const BodySchema = z.object({
   formTitle: z.string(),
   completedAt: z.string(),
   totalScore: z.number().nullable().optional(),
+  resultTitle: z.string().nullable().optional(),
+  resultText: z.string().nullable().optional(),
 });
 
 const ADMIN_EMAIL = "degirolami@gmail.com";
@@ -56,10 +58,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { patientName, patientEmail, formTitle, completedAt, totalScore } = parsed.data;
+    const { patientName, patientEmail, formTitle, completedAt, totalScore, resultTitle, resultText } = parsed.data;
 
     const scoreHtml = totalScore !== null && totalScore !== undefined
       ? `<tr><td style="padding:8px 12px;color:#6b7280;font-size:14px;">Puntaje</td><td style="padding:8px 12px;font-size:14px;font-weight:600;color:#3a8a6a;">${totalScore}</td></tr>`
+      : "";
+
+    const resultHtml = resultTitle
+      ? `<tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;font-size:14px;">Resultado</td><td style="padding:8px 12px;font-size:14px;font-weight:600;color:#2d3b2e;">${resultTitle}</td></tr>`
+        + (resultText ? `<tr><td colspan="2" style="padding:12px;color:#4b5563;font-size:13px;line-height:1.5;border-top:1px solid #e5e7eb;">${resultText}</td></tr>` : '')
       : "";
 
     const htmlBody = `
@@ -79,6 +86,7 @@ Deno.serve(async (req) => {
       <tr><td style="padding:8px 12px;color:#6b7280;font-size:14px;">Email</td><td style="padding:8px 12px;font-size:14px;color:#2d3b2e;">${patientEmail}</td></tr>
       <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;font-size:14px;">Evaluación</td><td style="padding:8px 12px;font-size:14px;font-weight:600;color:#2d3b2e;">${formTitle}</td></tr>
       ${scoreHtml}
+      ${resultHtml}
       <tr><td style="padding:8px 12px;color:#6b7280;font-size:14px;">Fecha</td><td style="padding:8px 12px;font-size:14px;color:#2d3b2e;">${completedAt}</td></tr>
     </table>
   </div>
