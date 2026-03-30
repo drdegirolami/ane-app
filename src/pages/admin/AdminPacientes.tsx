@@ -3,6 +3,7 @@ import { Search, Plus, MoreVertical, CheckCircle, XCircle, Clock, Loader2, User,
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
   DropdownMenu,
@@ -28,6 +29,7 @@ interface Patient {
   email: string | null;
   status: string | null;
   created_at: string | null;
+  admin_notes: string | null;
 }
 
 interface Checkin {
@@ -57,7 +59,7 @@ export default function AdminPacientes() {
   // Profile dialog state
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [editingProfile, setEditingProfile] = useState({ fullName: '', email: '' });
+  const [editingProfile, setEditingProfile] = useState({ fullName: '', email: '', adminNotes: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   
   // Checkins dialog state
@@ -163,6 +165,7 @@ export default function AdminPacientes() {
     setEditingProfile({
       fullName: patient.full_name || '',
       email: patient.email || '',
+      adminNotes: patient.admin_notes || '',
     });
     setProfileDialogOpen(true);
   };
@@ -176,6 +179,7 @@ export default function AdminPacientes() {
       .update({
         full_name: editingProfile.fullName,
         email: editingProfile.email,
+        admin_notes: editingProfile.adminNotes,
       })
       .eq('id', selectedPatient.id);
 
@@ -440,6 +444,17 @@ export default function AdminPacientes() {
                   : '-'
                 }
               </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="adminNotes">Notas privadas del administrador</Label>
+              <Textarea
+                id="adminNotes"
+                placeholder="Escribe aquí notas privadas sobre este paciente..."
+                value={editingProfile.adminNotes}
+                onChange={(e) => setEditingProfile({ ...editingProfile, adminNotes: e.target.value })}
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">Solo visible para administradores</p>
             </div>
           </div>
           <DialogFooter>
