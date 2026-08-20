@@ -242,6 +242,7 @@ export default function AdminPacientes() {
       notes: current?.notes ?? '',
     });
     setSuggestionDetail(null);
+    setAiAnalysis(null);
     setProfileDialogOpen(true);
   };
 
