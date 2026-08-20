@@ -209,6 +209,7 @@ export default function AdminPacientes() {
       fullName: patient.full_name || '',
       email: patient.email || '',
       adminNotes: patient.admin_notes || '',
+      startDate: patient.program_start_date ? patient.program_start_date.slice(0, 10) : '',
     });
     setProfileDialogOpen(true);
   };
