@@ -171,9 +171,19 @@ export default function AdminPacientes() {
         toast.error('Paciente creado, pero no se pudo enviar el email');
       }
       
+      const createdEmail = newPatient.email;
+      const createdStartDate = newPatient.startDate;
       setDialogOpen(false);
-      setNewPatient({ email: '', password: '', fullName: '' });
-      setTimeout(fetchPatients, 1000);
+      setNewPatient({ email: '', password: '', fullName: '', startDate: new Date().toISOString().slice(0, 10) });
+      setTimeout(async () => {
+        if (createdStartDate) {
+          await supabase
+            .from('profiles')
+            .update({ program_start_date: createdStartDate })
+            .eq('email', createdEmail);
+        }
+        fetchPatients();
+      }, 1000);
     }
     setCreating(false);
   };
