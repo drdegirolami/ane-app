@@ -800,7 +800,90 @@ export default function AdminPacientes() {
                 />
               </div>
             </div>
+
+            <div className="space-y-3 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-sm font-semibold">Análisis con IA</Label>
+                <Button variant="outline" size="sm" onClick={runAiAnalysis} disabled={analyzing}>
+                  {analyzing ? 'Analizando…' : 'Analizar paciente'}
+                </Button>
+              </div>
+              {!aiAnalysis && (
+                <p className="text-xs text-muted-foreground">
+                  Revisa las respuestas del paciente y sugiere perfil, próximo test y puntos para la consulta.
+                </p>
+              )}
+              {aiAnalysis && (
+                <div className="space-y-3 text-sm">
+                  <p className="text-muted-foreground">{aiAnalysis.resumen}</p>
+
+                  {aiAnalysis.proximo_test && (
+                    <div className="rounded-md bg-primary/5 border border-primary/20 p-2">
+                      <p className="font-medium text-foreground">
+                        Próximo test sugerido: {aiAnalysis.proximo_test.titulo}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{aiAnalysis.proximo_test.motivo}</p>
+                    </div>
+                  )}
+
+                  {!!aiAnalysis.hipotesis?.length && (
+                    <div>
+                      <p className="font-medium text-foreground text-xs uppercase tracking-wide">Hipótesis</p>
+                      <ul className="list-disc pl-4 text-xs text-muted-foreground mt-1">
+                        {aiAnalysis.hipotesis.map((h, i) => <li key={i}>{h}</li>)}
+                      </ul>
+                    </div>
+                  )}
+
+                  {!!aiAnalysis.senales_alerta?.length && (
+                    <div>
+                      <p className="font-medium text-destructive text-xs uppercase tracking-wide">Señales de alerta</p>
+                      <ul className="list-disc pl-4 text-xs text-muted-foreground mt-1">
+                        {aiAnalysis.senales_alerta.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                  )}
+
+                  {!!aiAnalysis.sugerencias_consulta?.length && (
+                    <div>
+                      <p className="font-medium text-foreground text-xs uppercase tracking-wide">Para la próxima consulta</p>
+                      <ul className="list-disc pl-4 text-xs text-muted-foreground mt-1">
+                        {aiAnalysis.sugerencias_consulta.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                  )}
+
+                  {aiAnalysis.perfil_sugerido && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const idBySlug = new Map(clinicalProfiles.map((p) => [p.slug, p.id]));
+                        const primaryId = idBySlug.get(aiAnalysis.perfil_sugerido!);
+                        const secondaryId = aiAnalysis.perfil_secundario
+                          ? idBySlug.get(aiAnalysis.perfil_secundario)
+                          : undefined;
+                        if (!primaryId) {
+                          toast.error('El perfil sugerido no coincide con el catálogo');
+                          return;
+                        }
+                        setAssignDraft({
+                          primary: primaryId,
+                          secondary: secondaryId ?? NONE,
+                          notes: `Sugerido por IA: ${aiAnalysis.resumen.slice(0, 200)}`,
+                        });
+                        toast.success('Perfil aplicado — guardá para confirmar');
+                      }}
+                    >
+                      Aplicar perfil sugerido por IA
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
+
 
               <Label htmlFor="adminNotes">Notas privadas del administrador</Label>
               <Textarea
