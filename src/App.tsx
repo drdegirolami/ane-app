@@ -26,6 +26,7 @@ import NotFound from "./pages/NotFound";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPacientes from "./pages/admin/AdminPacientes";
+import AdminPerfiles from "./pages/admin/AdminPerfiles";
 import AdminContenidos from "./pages/admin/AdminContenidos";
 import AdminPlanning from "./pages/admin/AdminPlanning";
 import AdminMensajes from "./pages/admin/AdminMensajes";
