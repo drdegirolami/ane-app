@@ -122,6 +122,57 @@ export type Database = {
         }
         Relationships: []
       }
+      clinical_sessions: {
+        Row: {
+          alerts: string | null
+          created_at: string
+          created_by: string | null
+          evolution: string | null
+          id: string
+          indications: string | null
+          motive: string | null
+          next_steps: string | null
+          patient_id: string
+          private_notes: string | null
+          program_month: number | null
+          session_date: string
+          session_type: string
+          updated_at: string
+        }
+        Insert: {
+          alerts?: string | null
+          created_at?: string
+          created_by?: string | null
+          evolution?: string | null
+          id?: string
+          indications?: string | null
+          motive?: string | null
+          next_steps?: string | null
+          patient_id: string
+          private_notes?: string | null
+          program_month?: number | null
+          session_date?: string
+          session_type?: string
+          updated_at?: string
+        }
+        Update: {
+          alerts?: string | null
+          created_at?: string
+          created_by?: string | null
+          evolution?: string | null
+          id?: string
+          indications?: string | null
+          motive?: string | null
+          next_steps?: string | null
+          patient_id?: string
+          private_notes?: string | null
+          program_month?: number | null
+          session_date?: string
+          session_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       content_files: {
         Row: {
           created_at: string | null

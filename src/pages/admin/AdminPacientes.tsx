@@ -30,6 +30,7 @@ import { getProgramProgress, formatStartDate } from '@/lib/programPhase';
 import { useClinicalProfiles, useAllCurrentAssignments, useAssignPatientProfile } from '@/hooks/useClinicalProfiles';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { inferProfile, DIAGNOSTIC_SLUG, type ProfileSuggestion } from '@/lib/profileInference';
+import ClinicalSessionsDialog from '@/components/admin/ClinicalSessionsDialog';
 
 interface Patient {
   id: string;
@@ -87,6 +88,7 @@ export default function AdminPacientes() {
   const [suggesting, setSuggesting] = useState(false);
   const [suggestionDetail, setSuggestionDetail] = useState<ProfileSuggestion | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [sessionsOpen, setSessionsOpen] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<AiAnalysis | null>(null);
   const [search, setSearch] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -593,6 +595,15 @@ export default function AdminPacientes() {
                             <FileText className="h-4 w-4 mr-2" />
                             Ver evaluaciones
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedPatient(patient);
+                              setSessionsOpen(true);
+                            }}
+                          >
+                            <ClipboardList className="h-4 w-4 mr-2" />
+                            Consultas clínicas
+                          </DropdownMenuItem>
                           {patientStatus === 'active' ? (
                             <DropdownMenuItem onClick={() => updatePatientStatus(patient.id, 'suspended')}>
                               Suspender acceso
@@ -985,6 +996,14 @@ export default function AdminPacientes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ClinicalSessionsDialog
+        open={sessionsOpen}
+        onOpenChange={setSessionsOpen}
+        patientUserId={selectedPatient?.user_id ?? null}
+        patientName={selectedPatient?.full_name || 'Paciente'}
+        programStartDate={selectedPatient?.program_start_date}
+      />
 
       {/* Evaluations Dialog */}
       <Dialog open={evalsDialogOpen} onOpenChange={setEvalsDialogOpen}>
