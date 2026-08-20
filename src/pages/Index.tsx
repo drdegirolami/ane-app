@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Calendar, ClipboardList, AlertTriangle, MessageCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Calendar, ClipboardList, AlertTriangle, MessageCircle, ArrowRight, Sparkles, UserSquare2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/components/layout/AppLayout';
 import { useMyNextStep } from '@/hooks/useMyNextStep';
+import { useMyClinicalProfile } from '@/hooks/useClinicalProfiles';
 import { useAuth } from '@/hooks/useAuth';
 const menuItems = [
   {
