@@ -284,6 +284,28 @@ export default function AdminPacientes() {
     }
   };
 
+  const runAiAnalysis = async () => {
+    if (!selectedPatient) return;
+    setAnalyzing(true);
+    setAiAnalysis(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-patient', {
+        body: { patientId: selectedPatient.user_id },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      setAiAnalysis(data.analysis);
+      toast.success('Análisis generado');
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo generar el análisis');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
 
 
   const saveProfile = async () => {
