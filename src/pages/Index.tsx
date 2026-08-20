@@ -38,7 +38,9 @@ const menuItems = [
 
 export default function Index() {
   const { data: nextStep, isLoading } = useMyNextStep();
+  const { data: myProfile } = useMyClinicalProfile();
   const { user } = useAuth();
+
   
   const userName = user?.user_metadata?.full_name || 'Usuario';
   const userEmail = user?.email || '';
