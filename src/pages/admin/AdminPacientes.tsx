@@ -229,6 +229,7 @@ export default function AdminPacientes() {
       secondary: current?.secondary_profile_id ?? NONE,
       notes: current?.notes ?? '',
     });
+    setSuggestionDetail(null);
     setProfileDialogOpen(true);
   };
 
