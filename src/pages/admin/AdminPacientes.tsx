@@ -702,6 +702,22 @@ export default function AdminPacientes() {
               </p>
             </div>
             <div className="space-y-3 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-sm font-semibold">Perfil clínico</Label>
+                <Button variant="outline" size="sm" onClick={suggestProfile} disabled={suggesting}>
+                  {suggesting ? 'Analizando…' : 'Sugerir desde diagnóstico'}
+                </Button>
+              </div>
+              {suggestionDetail && (
+                <div className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground space-y-1">
+                  <p className="font-medium text-foreground">Fundamento de la sugerencia</p>
+                  <ul className="list-disc pl-4">
+                    {suggestionDetail.rationale.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div>
                 <Label>Perfil clínico principal</Label>
                 <Select
