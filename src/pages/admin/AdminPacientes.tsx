@@ -633,7 +633,57 @@ export default function AdminPacientes() {
                 }
               </p>
             </div>
+            <div className="space-y-3 rounded-lg border border-border p-3">
+              <div>
+                <Label>Perfil clínico principal</Label>
+                <Select
+                  value={assignDraft.primary}
+                  onValueChange={(v) => setAssignDraft({ ...assignDraft, primary: v })}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Sin asignar" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    <SelectItem value={NONE}>Sin asignar</SelectItem>
+                    {clinicalProfiles.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Perfil secundario</Label>
+                <Select
+                  value={assignDraft.secondary}
+                  onValueChange={(v) => setAssignDraft({ ...assignDraft, secondary: v })}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Sin asignar" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    <SelectItem value={NONE}>Sin asignar</SelectItem>
+                    {clinicalProfiles
+                      .filter((p) => p.id !== assignDraft.primary)
+                      .map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="assignNotes">Nota de la asignación</Label>
+                <Textarea
+                  id="assignNotes"
+                  rows={2}
+                  className="mt-2"
+                  placeholder="Por qué se asigna este perfil (queda en el historial)"
+                  value={assignDraft.notes}
+                  onChange={(e) => setAssignDraft({ ...assignDraft, notes: e.target.value })}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
+
               <Label htmlFor="adminNotes">Notas privadas del administrador</Label>
               <Textarea
                 id="adminNotes"
