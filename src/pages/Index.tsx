@@ -55,11 +55,11 @@ export default function Index() {
           </div>
           
           <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground leading-tight">
-            Tu proceso esta semana
+            Programa ANE
           </h1>
           
           <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto">
-            Este espacio te ayuda a sostener el plan entre consultas.
+            Acompañamiento Neuroconductual Estructurado
             <span className="block mt-2 text-primary font-medium">
               No buscamos perfección, buscamos continuidad.
             </span>
