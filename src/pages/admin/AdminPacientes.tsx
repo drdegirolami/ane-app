@@ -224,6 +224,7 @@ export default function AdminPacientes() {
         full_name: editingProfile.fullName,
         email: editingProfile.email,
         admin_notes: editingProfile.adminNotes,
+        program_start_date: editingProfile.startDate || null,
       })
       .eq('id', selectedPatient.id);
 
