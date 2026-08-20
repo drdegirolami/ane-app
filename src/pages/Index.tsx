@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Calendar, ClipboardList, AlertTriangle, MessageCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { Calendar, ClipboardList, AlertTriangle, MessageCircle, ArrowRight, Sparkles, UserSquare2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import AppLayout from '@/components/layout/AppLayout';
 import { useMyNextStep } from '@/hooks/useMyNextStep';
+import { useMyClinicalProfile } from '@/hooks/useClinicalProfiles';
 import { useAuth } from '@/hooks/useAuth';
 const menuItems = [
   {
@@ -37,7 +38,9 @@ const menuItems = [
 
 export default function Index() {
   const { data: nextStep, isLoading } = useMyNextStep();
+  const { data: myProfile } = useMyClinicalProfile();
   const { user } = useAuth();
+
   
   const userName = user?.user_metadata?.full_name || 'Usuario';
   const userEmail = user?.email || '';
@@ -113,6 +116,36 @@ export default function Index() {
             </Card>
           )}
         </section>
+
+        {/* Perfil clínico (texto adaptado al paciente) */}
+        {myProfile?.primary?.patient_text && (
+          <section className="animate-slide-up">
+            <Card className="bg-accent/5 border-accent/20">
+              <CardContent className="p-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-accent/20 flex items-center justify-center flex-shrink-0">
+                    <UserSquare2 className="h-5 w-5 text-accent-foreground" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-display font-semibold text-foreground">
+                      Tu punto de partida
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {myProfile.primary.patient_text}
+                    </p>
+                    {myProfile.secondary?.patient_text && (
+                      <p className="text-sm text-muted-foreground leading-relaxed pt-2">
+                        {myProfile.secondary.patient_text}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        )}
+
+
 
         {/* Menu Cards */}
         <section className="space-y-4">

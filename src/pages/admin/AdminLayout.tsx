@@ -8,6 +8,7 @@ import {
   AlertTriangle, 
   Settings,
   LayoutDashboard,
+  UserSquare2,
   ArrowLeft
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ import { cn } from '@/lib/utils';
 const adminNavItems = [
   { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
   { path: '/admin/pacientes', icon: Users, label: 'Pacientes' },
+  { path: '/admin/perfiles', icon: UserSquare2, label: 'Perfiles' },
   { path: '/admin/evaluaciones', icon: FileText, label: 'Evaluaciones' },
   { path: '/admin/contenidos', icon: FileText, label: 'Contenidos' },
   { path: '/admin/planning', icon: Calendar, label: 'Planning' },

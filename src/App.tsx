@@ -26,6 +26,7 @@ import NotFound from "./pages/NotFound";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPacientes from "./pages/admin/AdminPacientes";
+import AdminPerfiles from "./pages/admin/AdminPerfiles";
 import AdminContenidos from "./pages/admin/AdminContenidos";
 import AdminPlanning from "./pages/admin/AdminPlanning";
 import AdminMensajes from "./pages/admin/AdminMensajes";
@@ -70,6 +71,7 @@ const App = () => (
               }>
                 <Route index element={<AdminDashboard />} />
                 <Route path="pacientes" element={<AdminPacientes />} />
+                <Route path="perfiles" element={<AdminPerfiles />} />
                 <Route path="contenidos" element={<AdminContenidos />} />
                 <Route path="planning" element={<AdminPlanning />} />
                 <Route path="mensajes" element={<AdminMensajes />} />

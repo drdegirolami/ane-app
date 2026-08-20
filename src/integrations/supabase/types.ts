@@ -71,6 +71,57 @@ export type Database = {
         }
         Relationships: []
       }
+      clinical_profiles: {
+        Row: {
+          behavioral_tasks: string[]
+          clinical_attitude: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          patient_text: string | null
+          priority_test_slugs: string[]
+          show_to_patient: boolean
+          slug: string
+          sort_order: number
+          updated_at: string
+          warning_signs: string[]
+        }
+        Insert: {
+          behavioral_tasks?: string[]
+          clinical_attitude?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          patient_text?: string | null
+          priority_test_slugs?: string[]
+          show_to_patient?: boolean
+          slug: string
+          sort_order?: number
+          updated_at?: string
+          warning_signs?: string[]
+        }
+        Update: {
+          behavioral_tasks?: string[]
+          clinical_attitude?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          patient_text?: string | null
+          priority_test_slugs?: string[]
+          show_to_patient?: boolean
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+          warning_signs?: string[]
+        }
+        Relationships: []
+      }
       content_files: {
         Row: {
           created_at: string | null
@@ -309,6 +360,57 @@ export type Database = {
           uploaded_by?: string
         }
         Relationships: []
+      }
+      patient_profile_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          patient_id: string
+          primary_profile_id: string | null
+          secondary_profile_id: string | null
+          source: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          primary_profile_id?: string | null
+          secondary_profile_id?: string | null
+          source?: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          primary_profile_id?: string | null
+          secondary_profile_id?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_profile_assignments_primary_profile_id_fkey"
+            columns: ["primary_profile_id"]
+            isOneToOne: false
+            referencedRelation: "clinical_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_profile_assignments_secondary_profile_id_fkey"
+            columns: ["secondary_profile_id"]
+            isOneToOne: false
+            referencedRelation: "clinical_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

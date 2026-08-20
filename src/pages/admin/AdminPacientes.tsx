@@ -27,6 +27,8 @@ import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
 import { normalizeFormSchema } from '@/lib/formSchema';
 import { FormSchema } from '@/hooks/useFormTemplates';
 import { getProgramProgress, formatStartDate } from '@/lib/programPhase';
+import { useClinicalProfiles, useAllCurrentAssignments, useAssignPatientProfile } from '@/hooks/useClinicalProfiles';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Patient {
   id: string;
@@ -63,7 +65,14 @@ const statusConfig = {
   pending: { label: 'Pendiente', icon: Clock, color: 'text-amber-500 bg-amber-500/10' },
 };
 
+const NONE = '__none__';
+
 export default function AdminPacientes() {
+  const { data: clinicalProfiles = [] } = useClinicalProfiles();
+  const { data: assignments = {} } = useAllCurrentAssignments();
+  const assignProfile = useAssignPatientProfile();
+
+  const [assignDraft, setAssignDraft] = useState({ primary: NONE, secondary: NONE, notes: '' });
   const [search, setSearch] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,6 +220,12 @@ export default function AdminPacientes() {
       adminNotes: patient.admin_notes || '',
       startDate: patient.program_start_date ? patient.program_start_date.slice(0, 10) : '',
     });
+    const current = assignments[patient.user_id];
+    setAssignDraft({
+      primary: current?.primary_profile_id ?? NONE,
+      secondary: current?.secondary_profile_id ?? NONE,
+      notes: current?.notes ?? '',
+    });
     setProfileDialogOpen(true);
   };
 
@@ -231,13 +246,34 @@ export default function AdminPacientes() {
     if (error) {
       toast.error('Error al guardar perfil');
       console.error(error);
-    } else {
-      toast.success('Perfil actualizado');
-      setProfileDialogOpen(false);
-      fetchPatients();
+      setSavingProfile(false);
+      return;
     }
+
+    // Guardar la asignación de perfil clínico si cambió
+    const current = assignments[selectedPatient.user_id];
+    const primary = assignDraft.primary === NONE ? null : assignDraft.primary;
+    const secondary = assignDraft.secondary === NONE ? null : assignDraft.secondary;
+    const changed =
+      (current?.primary_profile_id ?? null) !== primary ||
+      (current?.secondary_profile_id ?? null) !== secondary ||
+      (current?.notes ?? '') !== assignDraft.notes;
+
+    if (changed && (primary || secondary)) {
+      await assignProfile.mutateAsync({
+        patientId: selectedPatient.user_id,
+        primaryProfileId: primary,
+        secondaryProfileId: secondary,
+        notes: assignDraft.notes || null,
+      });
+    }
+
+    toast.success('Perfil actualizado');
+    setProfileDialogOpen(false);
+    fetchPatients();
     setSavingProfile(false);
   };
+
 
   const openCheckinsDialog = async (patient: Patient) => {
     setSelectedPatient(patient);
@@ -421,6 +457,17 @@ export default function AdminPacientes() {
                             Sin fecha de inicio
                           </Badge>
                         )}
+                        {(() => {
+                          const assignment = assignments[patient.user_id];
+                          const primaryName = clinicalProfiles.find(
+                            (p) => p.id === assignment?.primary_profile_id
+                          )?.name;
+                          return primaryName ? (
+                            <p className="text-xs text-primary mt-1">{primaryName}</p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground mt-1">Sin perfil asignado</p>
+                          );
+                        })()}
                         <p className="text-xs text-muted-foreground mt-1">
                           Inicio: {formatStartDate(patient.program_start_date)}
                         </p>
@@ -597,7 +644,57 @@ export default function AdminPacientes() {
                 }
               </p>
             </div>
+            <div className="space-y-3 rounded-lg border border-border p-3">
+              <div>
+                <Label>Perfil clínico principal</Label>
+                <Select
+                  value={assignDraft.primary}
+                  onValueChange={(v) => setAssignDraft({ ...assignDraft, primary: v })}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Sin asignar" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    <SelectItem value={NONE}>Sin asignar</SelectItem>
+                    {clinicalProfiles.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Perfil secundario</Label>
+                <Select
+                  value={assignDraft.secondary}
+                  onValueChange={(v) => setAssignDraft({ ...assignDraft, secondary: v })}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Sin asignar" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    <SelectItem value={NONE}>Sin asignar</SelectItem>
+                    {clinicalProfiles
+                      .filter((p) => p.id !== assignDraft.primary)
+                      .map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="assignNotes">Nota de la asignación</Label>
+                <Textarea
+                  id="assignNotes"
+                  rows={2}
+                  className="mt-2"
+                  placeholder="Por qué se asigna este perfil (queda en el historial)"
+                  value={assignDraft.notes}
+                  onChange={(e) => setAssignDraft({ ...assignDraft, notes: e.target.value })}
+                />
+              </div>
+            </div>
             <div className="space-y-2">
+
               <Label htmlFor="adminNotes">Notas privadas del administrador</Label>
               <Textarea
                 id="adminNotes"
