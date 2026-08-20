@@ -73,6 +73,8 @@ export default function AdminPacientes() {
   const assignProfile = useAssignPatientProfile();
 
   const [assignDraft, setAssignDraft] = useState({ primary: NONE, secondary: NONE, notes: '' });
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestionDetail, setSuggestionDetail] = useState<ProfileSuggestion | null>(null);
   const [search, setSearch] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
