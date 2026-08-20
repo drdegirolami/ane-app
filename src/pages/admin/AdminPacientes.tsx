@@ -63,7 +63,14 @@ const statusConfig = {
   pending: { label: 'Pendiente', icon: Clock, color: 'text-amber-500 bg-amber-500/10' },
 };
 
+const NONE = '__none__';
+
 export default function AdminPacientes() {
+  const { data: clinicalProfiles = [] } = useClinicalProfiles();
+  const { data: assignments = {} } = useAllCurrentAssignments();
+  const assignProfile = useAssignPatientProfile();
+
+  const [assignDraft, setAssignDraft] = useState({ primary: NONE, secondary: NONE, notes: '' });
   const [search, setSearch] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
