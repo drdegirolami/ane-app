@@ -69,12 +69,17 @@ export default function AdminPacientes() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [newPatient, setNewPatient] = useState({ email: '', password: '', fullName: '' });
+  const [newPatient, setNewPatient] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    startDate: new Date().toISOString().slice(0, 10),
+  });
   
   // Profile dialog state
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [editingProfile, setEditingProfile] = useState({ fullName: '', email: '', adminNotes: '' });
+  const [editingProfile, setEditingProfile] = useState({ fullName: '', email: '', adminNotes: '', startDate: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   
   // Checkins dialog state
