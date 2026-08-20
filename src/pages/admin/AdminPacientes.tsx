@@ -229,6 +229,59 @@ export default function AdminPacientes() {
     setProfileDialogOpen(true);
   };
 
+  const suggestProfile = async () => {
+    if (!selectedPatient) return;
+    setSuggesting(true);
+    try {
+      const { data: template } = await supabase
+        .from('form_templates')
+        .select('id')
+        .eq('slug', DIAGNOSTIC_SLUG)
+        .maybeSingle();
+
+      if (!template) {
+        toast.error('No se encontró el test de diagnóstico inicial');
+        return;
+      }
+
+      const { data: response } = await supabase
+        .from('form_responses')
+        .select('answers_json')
+        .eq('patient_id', selectedPatient.user_id)
+        .eq('template_id', template.id)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!response) {
+        toast.error('Este paciente todavía no completó el diagnóstico inicial');
+        return;
+      }
+
+      const suggestion = inferProfile(response.answers_json);
+      const idBySlug = new Map(clinicalProfiles.map((p) => [p.slug, p.id]));
+      const primaryId = suggestion.primary ? idBySlug.get(suggestion.primary) : undefined;
+      const secondaryId = suggestion.secondary ? idBySlug.get(suggestion.secondary) : undefined;
+
+      if (!primaryId) {
+        toast.error('No se pudo determinar un perfil dominante');
+        return;
+      }
+
+      setAssignDraft({
+        primary: primaryId,
+        secondary: secondaryId ?? NONE,
+        notes: `Sugerido automáticamente desde el diagnóstico inicial. ${suggestion.rationale.slice(0, 5).join('; ')}`,
+      });
+      setSuggestionDetail(suggestion);
+      toast.success('Perfil sugerido — revisalo y guardá para confirmar');
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+
+
   const saveProfile = async () => {
     if (!selectedPatient) return;
     
