@@ -71,6 +71,7 @@ const App = () => (
               }>
                 <Route index element={<AdminDashboard />} />
                 <Route path="pacientes" element={<AdminPacientes />} />
+                <Route path="perfiles" element={<AdminPerfiles />} />
                 <Route path="contenidos" element={<AdminContenidos />} />
                 <Route path="planning" element={<AdminPlanning />} />
                 <Route path="mensajes" element={<AdminMensajes />} />
