@@ -26,6 +26,7 @@ import FormReadOnly from '@/components/forms/FormReadOnly';
 import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
 import { normalizeFormSchema } from '@/lib/formSchema';
 import { FormSchema } from '@/hooks/useFormTemplates';
+import { getProgramProgress, formatStartDate } from '@/lib/programPhase';
 
 interface Patient {
   id: string;
