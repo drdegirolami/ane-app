@@ -546,6 +546,20 @@ export default function AdminPacientes() {
               </p>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="startDate">Fecha de inicio del programa</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={editingProfile.startDate}
+                onChange={(e) => setEditingProfile({ ...editingProfile, startDate: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                {editingProfile.startDate
+                  ? getProgramProgress(editingProfile.startDate).label
+                  : 'Definí la fecha para calcular el mes y la fase del proceso'}
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label>Fecha de registro</Label>
               <p className="text-sm text-muted-foreground">
                 {selectedPatient?.created_at 
