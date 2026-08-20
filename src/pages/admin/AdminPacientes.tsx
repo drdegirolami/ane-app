@@ -211,6 +211,12 @@ export default function AdminPacientes() {
       adminNotes: patient.admin_notes || '',
       startDate: patient.program_start_date ? patient.program_start_date.slice(0, 10) : '',
     });
+    const current = assignments[patient.user_id];
+    setAssignDraft({
+      primary: current?.primary_profile_id ?? NONE,
+      secondary: current?.secondary_profile_id ?? NONE,
+      notes: current?.notes ?? '',
+    });
     setProfileDialogOpen(true);
   };
 
@@ -231,13 +237,34 @@ export default function AdminPacientes() {
     if (error) {
       toast.error('Error al guardar perfil');
       console.error(error);
-    } else {
-      toast.success('Perfil actualizado');
-      setProfileDialogOpen(false);
-      fetchPatients();
+      setSavingProfile(false);
+      return;
     }
+
+    // Guardar la asignación de perfil clínico si cambió
+    const current = assignments[selectedPatient.user_id];
+    const primary = assignDraft.primary === NONE ? null : assignDraft.primary;
+    const secondary = assignDraft.secondary === NONE ? null : assignDraft.secondary;
+    const changed =
+      (current?.primary_profile_id ?? null) !== primary ||
+      (current?.secondary_profile_id ?? null) !== secondary ||
+      (current?.notes ?? '') !== assignDraft.notes;
+
+    if (changed && (primary || secondary)) {
+      await assignProfile.mutateAsync({
+        patientId: selectedPatient.user_id,
+        primaryProfileId: primary,
+        secondaryProfileId: secondary,
+        notes: assignDraft.notes || null,
+      });
+    }
+
+    toast.success('Perfil actualizado');
+    setProfileDialogOpen(false);
+    fetchPatients();
     setSavingProfile(false);
   };
+
 
   const openCheckinsDialog = async (patient: Patient) => {
     setSelectedPatient(patient);
