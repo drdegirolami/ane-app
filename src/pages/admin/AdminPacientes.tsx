@@ -66,6 +66,16 @@ const statusConfig = {
   pending: { label: 'Pendiente', icon: Clock, color: 'text-amber-500 bg-amber-500/10' },
 };
 
+interface AiAnalysis {
+  resumen: string;
+  perfil_sugerido?: string;
+  perfil_secundario?: string;
+  hipotesis?: string[];
+  proximo_test?: { slug: string; titulo: string; motivo: string };
+  senales_alerta?: string[];
+  sugerencias_consulta?: string[];
+}
+
 const NONE = '__none__';
 
 export default function AdminPacientes() {
