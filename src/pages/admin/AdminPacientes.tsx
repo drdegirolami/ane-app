@@ -29,6 +29,7 @@ import { FormSchema } from '@/hooks/useFormTemplates';
 import { getProgramProgress, formatStartDate } from '@/lib/programPhase';
 import { useClinicalProfiles, useAllCurrentAssignments, useAssignPatientProfile } from '@/hooks/useClinicalProfiles';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { inferProfile, DIAGNOSTIC_SLUG, type ProfileSuggestion } from '@/lib/profileInference';
 
 interface Patient {
   id: string;
