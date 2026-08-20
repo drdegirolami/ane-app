@@ -136,9 +136,9 @@ export default function Auth() {
             <Leaf className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-display">Programa Nutricional</CardTitle>
+            <CardTitle className="text-2xl font-display">Programa ANE</CardTitle>
             <CardDescription className="mt-2">
-              Tu acompañamiento entre consultas
+              Acompañamiento Neuroconductual Estructurado
             </CardDescription>
           </div>
         </CardHeader>
