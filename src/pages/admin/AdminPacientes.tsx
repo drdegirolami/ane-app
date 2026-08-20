@@ -502,6 +502,18 @@ export default function AdminPacientes() {
                 onChange={(e) => setNewPatient({ ...newPatient, password: e.target.value })}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="newStartDate">Fecha de inicio del programa</Label>
+              <Input
+                id="newStartDate"
+                type="date"
+                value={newPatient.startDate}
+                onChange={(e) => setNewPatient({ ...newPatient, startDate: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Define el mes y la fase en que se ubica el paciente dentro del programa.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
