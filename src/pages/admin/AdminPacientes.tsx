@@ -27,6 +27,8 @@ import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
 import { normalizeFormSchema } from '@/lib/formSchema';
 import { FormSchema } from '@/hooks/useFormTemplates';
 import { getProgramProgress, formatStartDate } from '@/lib/programPhase';
+import { useClinicalProfiles, useAllCurrentAssignments, useAssignPatientProfile } from '@/hooks/useClinicalProfiles';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Patient {
   id: string;
