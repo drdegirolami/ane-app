@@ -29,6 +29,7 @@ import { FormSchema } from '@/hooks/useFormTemplates';
 import { getProgramProgress, formatStartDate } from '@/lib/programPhase';
 import { useClinicalProfiles, useAllCurrentAssignments, useAssignPatientProfile } from '@/hooks/useClinicalProfiles';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { inferProfile, DIAGNOSTIC_SLUG, type ProfileSuggestion } from '@/lib/profileInference';
 
 interface Patient {
   id: string;
@@ -65,6 +66,16 @@ const statusConfig = {
   pending: { label: 'Pendiente', icon: Clock, color: 'text-amber-500 bg-amber-500/10' },
 };
 
+interface AiAnalysis {
+  resumen: string;
+  perfil_sugerido?: string;
+  perfil_secundario?: string;
+  hipotesis?: string[];
+  proximo_test?: { slug: string; titulo: string; motivo: string };
+  senales_alerta?: string[];
+  sugerencias_consulta?: string[];
+}
+
 const NONE = '__none__';
 
 export default function AdminPacientes() {
@@ -73,6 +84,10 @@ export default function AdminPacientes() {
   const assignProfile = useAssignPatientProfile();
 
   const [assignDraft, setAssignDraft] = useState({ primary: NONE, secondary: NONE, notes: '' });
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestionDetail, setSuggestionDetail] = useState<ProfileSuggestion | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<AiAnalysis | null>(null);
   const [search, setSearch] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -226,8 +241,85 @@ export default function AdminPacientes() {
       secondary: current?.secondary_profile_id ?? NONE,
       notes: current?.notes ?? '',
     });
+    setSuggestionDetail(null);
+    setAiAnalysis(null);
     setProfileDialogOpen(true);
   };
+
+  const suggestProfile = async () => {
+    if (!selectedPatient) return;
+    setSuggesting(true);
+    try {
+      const { data: template } = await supabase
+        .from('form_templates')
+        .select('id')
+        .eq('slug', DIAGNOSTIC_SLUG)
+        .maybeSingle();
+
+      if (!template) {
+        toast.error('No se encontró el test de diagnóstico inicial');
+        return;
+      }
+
+      const { data: response } = await supabase
+        .from('form_responses')
+        .select('answers_json')
+        .eq('patient_id', selectedPatient.user_id)
+        .eq('template_id', template.id)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!response) {
+        toast.error('Este paciente todavía no completó el diagnóstico inicial');
+        return;
+      }
+
+      const suggestion = inferProfile(response.answers_json);
+      const idBySlug = new Map(clinicalProfiles.map((p) => [p.slug, p.id]));
+      const primaryId = suggestion.primary ? idBySlug.get(suggestion.primary) : undefined;
+      const secondaryId = suggestion.secondary ? idBySlug.get(suggestion.secondary) : undefined;
+
+      if (!primaryId) {
+        toast.error('No se pudo determinar un perfil dominante');
+        return;
+      }
+
+      setAssignDraft({
+        primary: primaryId,
+        secondary: secondaryId ?? NONE,
+        notes: `Sugerido automáticamente desde el diagnóstico inicial. ${suggestion.rationale.slice(0, 5).join('; ')}`,
+      });
+      setSuggestionDetail(suggestion);
+      toast.success('Perfil sugerido — revisalo y guardá para confirmar');
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const runAiAnalysis = async () => {
+    if (!selectedPatient) return;
+    setAnalyzing(true);
+    setAiAnalysis(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-patient', {
+        body: { patientId: selectedPatient.user_id },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      setAiAnalysis(data.analysis);
+      toast.success('Análisis generado');
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo generar el análisis');
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
 
   const saveProfile = async () => {
     if (!selectedPatient) return;
@@ -645,6 +737,22 @@ export default function AdminPacientes() {
               </p>
             </div>
             <div className="space-y-3 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-sm font-semibold">Perfil clínico</Label>
+                <Button variant="outline" size="sm" onClick={suggestProfile} disabled={suggesting}>
+                  {suggesting ? 'Analizando…' : 'Sugerir desde diagnóstico'}
+                </Button>
+              </div>
+              {suggestionDetail && (
+                <div className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground space-y-1">
+                  <p className="font-medium text-foreground">Fundamento de la sugerencia</p>
+                  <ul className="list-disc pl-4">
+                    {suggestionDetail.rationale.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div>
                 <Label>Perfil clínico principal</Label>
                 <Select
@@ -693,7 +801,90 @@ export default function AdminPacientes() {
                 />
               </div>
             </div>
+
+            <div className="space-y-3 rounded-lg border border-border p-3">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-sm font-semibold">Análisis con IA</Label>
+                <Button variant="outline" size="sm" onClick={runAiAnalysis} disabled={analyzing}>
+                  {analyzing ? 'Analizando…' : 'Analizar paciente'}
+                </Button>
+              </div>
+              {!aiAnalysis && (
+                <p className="text-xs text-muted-foreground">
+                  Revisa las respuestas del paciente y sugiere perfil, próximo test y puntos para la consulta.
+                </p>
+              )}
+              {aiAnalysis && (
+                <div className="space-y-3 text-sm">
+                  <p className="text-muted-foreground">{aiAnalysis.resumen}</p>
+
+                  {aiAnalysis.proximo_test && (
+                    <div className="rounded-md bg-primary/5 border border-primary/20 p-2">
+                      <p className="font-medium text-foreground">
+                        Próximo test sugerido: {aiAnalysis.proximo_test.titulo}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{aiAnalysis.proximo_test.motivo}</p>
+                    </div>
+                  )}
+
+                  {!!aiAnalysis.hipotesis?.length && (
+                    <div>
+                      <p className="font-medium text-foreground text-xs uppercase tracking-wide">Hipótesis</p>
+                      <ul className="list-disc pl-4 text-xs text-muted-foreground mt-1">
+                        {aiAnalysis.hipotesis.map((h, i) => <li key={i}>{h}</li>)}
+                      </ul>
+                    </div>
+                  )}
+
+                  {!!aiAnalysis.senales_alerta?.length && (
+                    <div>
+                      <p className="font-medium text-destructive text-xs uppercase tracking-wide">Señales de alerta</p>
+                      <ul className="list-disc pl-4 text-xs text-muted-foreground mt-1">
+                        {aiAnalysis.senales_alerta.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                  )}
+
+                  {!!aiAnalysis.sugerencias_consulta?.length && (
+                    <div>
+                      <p className="font-medium text-foreground text-xs uppercase tracking-wide">Para la próxima consulta</p>
+                      <ul className="list-disc pl-4 text-xs text-muted-foreground mt-1">
+                        {aiAnalysis.sugerencias_consulta.map((s, i) => <li key={i}>{s}</li>)}
+                      </ul>
+                    </div>
+                  )}
+
+                  {aiAnalysis.perfil_sugerido && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const idBySlug = new Map(clinicalProfiles.map((p) => [p.slug, p.id]));
+                        const primaryId = idBySlug.get(aiAnalysis.perfil_sugerido!);
+                        const secondaryId = aiAnalysis.perfil_secundario
+                          ? idBySlug.get(aiAnalysis.perfil_secundario)
+                          : undefined;
+                        if (!primaryId) {
+                          toast.error('El perfil sugerido no coincide con el catálogo');
+                          return;
+                        }
+                        setAssignDraft({
+                          primary: primaryId,
+                          secondary: secondaryId ?? NONE,
+                          notes: `Sugerido por IA: ${aiAnalysis.resumen.slice(0, 200)}`,
+                        });
+                        toast.success('Perfil aplicado — guardá para confirmar');
+                      }}
+                    >
+                      Aplicar perfil sugerido por IA
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
+
 
               <Label htmlFor="adminNotes">Notas privadas del administrador</Label>
               <Textarea
