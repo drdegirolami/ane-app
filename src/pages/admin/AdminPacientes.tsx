@@ -457,6 +457,17 @@ export default function AdminPacientes() {
                             Sin fecha de inicio
                           </Badge>
                         )}
+                        {(() => {
+                          const assignment = assignments[patient.user_id];
+                          const primaryName = clinicalProfiles.find(
+                            (p) => p.id === assignment?.primary_profile_id
+                          )?.name;
+                          return primaryName ? (
+                            <p className="text-xs text-primary mt-1">{primaryName}</p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground mt-1">Sin perfil asignado</p>
+                          );
+                        })()}
                         <p className="text-xs text-muted-foreground mt-1">
                           Inicio: {formatStartDate(patient.program_start_date)}
                         </p>
