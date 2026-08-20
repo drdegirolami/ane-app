@@ -389,6 +389,7 @@ export default function AdminPacientes() {
                 const patientStatus = patient.status || 'pending';
                 const status = statusConfig[patientStatus as keyof typeof statusConfig] || statusConfig.pending;
                 const StatusIcon = status.icon;
+                const progress = getProgramProgress(patient.program_start_date);
 
                 return (
                   <div 
@@ -408,11 +409,23 @@ export default function AdminPacientes() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                      <div className="hidden sm:block text-right">
-                        <p className="text-xs text-muted-foreground">
-                          {patient.created_at ? new Date(patient.created_at).toLocaleDateString('es-ES') : '-'}
+                      <div className="hidden md:block text-right">
+                        {progress.phase ? (
+                          <Badge variant="secondary" className="font-normal">
+                            {progress.finished
+                              ? `Mes ${progress.month} · Completado`
+                              : `Mes ${progress.month} · Fase ${progress.phase}`}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="font-normal text-muted-foreground">
+                            Sin fecha de inicio
+                          </Badge>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Inicio: {formatStartDate(patient.program_start_date)}
                         </p>
                       </div>
+
                       
                       <div className={cn(
                         "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
