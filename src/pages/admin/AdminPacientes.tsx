@@ -26,6 +26,7 @@ import FormReadOnly from '@/components/forms/FormReadOnly';
 import { getScoreResult, hasScoringEnabled } from '@/lib/scoring';
 import { normalizeFormSchema } from '@/lib/formSchema';
 import { FormSchema } from '@/hooks/useFormTemplates';
+import { getProgramProgress, formatStartDate } from '@/lib/programPhase';
 
 interface Patient {
   id: string;
@@ -35,6 +36,7 @@ interface Patient {
   status: string | null;
   created_at: string | null;
   admin_notes: string | null;
+  program_start_date: string | null;
 }
 
 interface Checkin {
@@ -67,12 +69,17 @@ export default function AdminPacientes() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [newPatient, setNewPatient] = useState({ email: '', password: '', fullName: '' });
+  const [newPatient, setNewPatient] = useState({
+    email: '',
+    password: '',
+    fullName: '',
+    startDate: new Date().toISOString().slice(0, 10),
+  });
   
   // Profile dialog state
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [editingProfile, setEditingProfile] = useState({ fullName: '', email: '', adminNotes: '' });
+  const [editingProfile, setEditingProfile] = useState({ fullName: '', email: '', adminNotes: '', startDate: '' });
   const [savingProfile, setSavingProfile] = useState(false);
   
   // Checkins dialog state
@@ -164,9 +171,19 @@ export default function AdminPacientes() {
         toast.error('Paciente creado, pero no se pudo enviar el email');
       }
       
+      const createdEmail = newPatient.email;
+      const createdStartDate = newPatient.startDate;
       setDialogOpen(false);
-      setNewPatient({ email: '', password: '', fullName: '' });
-      setTimeout(fetchPatients, 1000);
+      setNewPatient({ email: '', password: '', fullName: '', startDate: new Date().toISOString().slice(0, 10) });
+      setTimeout(async () => {
+        if (createdStartDate) {
+          await supabase
+            .from('profiles')
+            .update({ program_start_date: createdStartDate })
+            .eq('email', createdEmail);
+        }
+        fetchPatients();
+      }, 1000);
     }
     setCreating(false);
   };
@@ -192,6 +209,7 @@ export default function AdminPacientes() {
       fullName: patient.full_name || '',
       email: patient.email || '',
       adminNotes: patient.admin_notes || '',
+      startDate: patient.program_start_date ? patient.program_start_date.slice(0, 10) : '',
     });
     setProfileDialogOpen(true);
   };
@@ -206,6 +224,7 @@ export default function AdminPacientes() {
         full_name: editingProfile.fullName,
         email: editingProfile.email,
         admin_notes: editingProfile.adminNotes,
+        program_start_date: editingProfile.startDate || null,
       })
       .eq('id', selectedPatient.id);
 
@@ -370,6 +389,7 @@ export default function AdminPacientes() {
                 const patientStatus = patient.status || 'pending';
                 const status = statusConfig[patientStatus as keyof typeof statusConfig] || statusConfig.pending;
                 const StatusIcon = status.icon;
+                const progress = getProgramProgress(patient.program_start_date);
 
                 return (
                   <div 
@@ -389,11 +409,23 @@ export default function AdminPacientes() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                      <div className="hidden sm:block text-right">
-                        <p className="text-xs text-muted-foreground">
-                          {patient.created_at ? new Date(patient.created_at).toLocaleDateString('es-ES') : '-'}
+                      <div className="hidden md:block text-right">
+                        {progress.phase ? (
+                          <Badge variant="secondary" className="font-normal">
+                            {progress.finished
+                              ? `Mes ${progress.month} · Completado`
+                              : `Mes ${progress.month} · Fase ${progress.phase}`}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="font-normal text-muted-foreground">
+                            Sin fecha de inicio
+                          </Badge>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Inicio: {formatStartDate(patient.program_start_date)}
                         </p>
                       </div>
+
                       
                       <div className={cn(
                         "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
@@ -483,6 +515,18 @@ export default function AdminPacientes() {
                 onChange={(e) => setNewPatient({ ...newPatient, password: e.target.value })}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="newStartDate">Fecha de inicio del programa</Label>
+              <Input
+                id="newStartDate"
+                type="date"
+                value={newPatient.startDate}
+                onChange={(e) => setNewPatient({ ...newPatient, startDate: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Define el mes y la fase en que se ubica el paciente dentro del programa.
+              </p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
@@ -524,6 +568,20 @@ export default function AdminPacientes() {
               <Label>Estado</Label>
               <p className="text-sm text-muted-foreground">
                 {statusConfig[selectedPatient?.status as keyof typeof statusConfig]?.label || 'Pendiente'}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Fecha de inicio del programa</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={editingProfile.startDate}
+                onChange={(e) => setEditingProfile({ ...editingProfile, startDate: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                {editingProfile.startDate
+                  ? getProgramProgress(editingProfile.startDate).label
+                  : 'Definí la fecha para calcular el mes y la fase del proceso'}
               </p>
             </div>
             <div className="space-y-2">
