@@ -31,10 +31,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <div className="container flex items-center justify-between h-16 px-4">
           <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-              <span className="text-primary-foreground font-display font-bold text-sm">PN</span>
+              <span className="text-primary-foreground font-display font-bold text-sm">ANE</span>
             </div>
             <span className="font-display font-semibold text-foreground hidden sm:block">
-              Programa Nutricional
+              Programa ANE
             </span>
           </Link>
 
