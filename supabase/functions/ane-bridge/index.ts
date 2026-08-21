@@ -44,9 +44,108 @@ Deno.serve(async (req) => {
       return json({ patients: data ?? [] });
     }
 
+    if (action === "list_profiles") {
+      const { data, error } = await supabase
+        .from("clinical_profiles")
+        .select("id, slug, name, description, patient_text, is_active, sort_order")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return json({ profiles: data ?? [] });
+    }
+
+    if (action === "upsert_patient") {
+      const email = String(body.email ?? "").trim().toLowerCase();
+      if (!email) return json({ error: "email is required" }, 400);
+
+      const fullName = body.full_name ? String(body.full_name).trim() : null;
+      const status = body.status ? String(body.status) : null;
+      const programStartDate = body.program_start_date
+        ? String(body.program_start_date)
+        : null;
+      const primarySlug = body.primary_profile_slug
+        ? String(body.primary_profile_slug)
+        : null;
+      const secondarySlug = body.secondary_profile_slug
+        ? String(body.secondary_profile_slug)
+        : null;
+
+      // Find existing profile by email
+      const { data: existing, error: existingError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .ilike("email", email)
+        .maybeSingle();
+      if (existingError) throw existingError;
+
+      let userId = existing?.user_id as string | undefined;
+      let created = false;
+
+      if (!userId) {
+        // Create the auth account WITHOUT sending any email
+        const tempPassword = `ANE-${crypto.randomUUID()}`;
+        const { data: createdUser, error: createError } = await supabase.auth.admin
+          .createUser({
+            email,
+            password: tempPassword,
+            email_confirm: true,
+            user_metadata: fullName ? { full_name: fullName } : {},
+          });
+        if (createError) throw createError;
+        userId = createdUser.user?.id;
+        created = true;
+      }
+
+      if (!userId) return json({ error: "could not resolve patient" }, 500);
+
+      const updates: Record<string, unknown> = { email };
+      if (fullName) updates.full_name = fullName;
+      if (status) updates.status = status;
+      if (programStartDate) updates.program_start_date = programStartDate;
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("user_id", userId);
+      if (updateError) throw updateError;
+
+      // Optional clinical profile assignment (shared basic record)
+      if (primarySlug || secondarySlug) {
+        const { data: profileRows, error: profilesError } = await supabase
+          .from("clinical_profiles")
+          .select("id, slug")
+          .in("slug", [primarySlug, secondarySlug].filter(Boolean) as string[]);
+        if (profilesError) throw profilesError;
+        const idBySlug = new Map(
+          (profileRows ?? []).map((p: { id: string; slug: string }) => [p.slug, p.id]),
+        );
+        const { error: assignError } = await supabase
+          .from("patient_profile_assignments")
+          .insert({
+            patient_id: userId,
+            primary_profile_id: primarySlug ? idBySlug.get(primarySlug) ?? null : null,
+            secondary_profile_id: secondarySlug
+              ? idBySlug.get(secondarySlug) ?? null
+              : null,
+            source: "evaluador",
+            notes: body.notes ? String(body.notes) : null,
+          });
+        if (assignError) throw assignError;
+      }
+
+      return json({
+        ok: true,
+        created,
+        patient_id: userId,
+        email,
+        links: { patients: `${APP_URL}/admin/pacientes` },
+      });
+    }
+
     if (action !== "patient_summary") {
       return json({ error: "unknown action" }, 400);
     }
+
 
     const email = String(body.email ?? "").trim().toLowerCase();
     if (!email) return json({ error: "email is required" }, 400);
