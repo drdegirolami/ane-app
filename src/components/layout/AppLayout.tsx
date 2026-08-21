@@ -47,16 +47,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     <span className="hidden sm:inline">Panel Admin</span>
                   </Button>
                 </Link>
-                <a
-                  href="https://click-score-guide.lovable.app"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-xl gap-2 text-primary border-primary/30 hover:bg-primary/10"
+                  onClick={() => { window.location.href = "https://click-score-guide.lovable.app"; }}
                 >
-                  <Button variant="outline" size="sm" className="rounded-xl gap-2 text-primary border-primary/30 hover:bg-primary/10">
-                    <ExternalLink className="h-4 w-4" />
-                    <span className="hidden sm:inline">Panel Clínico</span>
-                  </Button>
-                </a>
+                  <ExternalLink className="h-4 w-4" />
+                  <span className="hidden sm:inline">Panel Clínico</span>
+                </Button>
               </>
             )}
             <Button
