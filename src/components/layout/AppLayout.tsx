@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, ClipboardList, AlertTriangle, MessageCircle, Info, Settings, Moon, Sun, Shield } from 'lucide-react';
+import { Home, Calendar, ClipboardList, AlertTriangle, MessageCircle, Info, Settings, Moon, Sun, Shield, ExternalLink } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -40,12 +40,24 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
           <div className="flex items-center gap-2">
             {isAdmin && (
-              <Link to="/admin">
-                <Button variant="outline" size="sm" className="rounded-xl gap-2 text-primary border-primary/30 hover:bg-primary/10">
-                  <Shield className="h-4 w-4" />
-                  <span className="hidden sm:inline">Panel Admin</span>
-                </Button>
-              </Link>
+              <>
+                <Link to="/admin">
+                  <Button variant="outline" size="sm" className="rounded-xl gap-2 text-primary border-primary/30 hover:bg-primary/10">
+                    <Shield className="h-4 w-4" />
+                    <span className="hidden sm:inline">Panel Admin</span>
+                  </Button>
+                </Link>
+                <a
+                  href="https://click-score-guide.lovable.app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline" size="sm" className="rounded-xl gap-2 text-primary border-primary/30 hover:bg-primary/10">
+                    <ExternalLink className="h-4 w-4" />
+                    <span className="hidden sm:inline">Panel Clínico</span>
+                  </Button>
+                </a>
+              </>
             )}
             <Button
               variant="ghost"
