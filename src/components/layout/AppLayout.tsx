@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Calendar, ClipboardList, AlertTriangle, MessageCircle, Info, Settings, Moon, Sun, Shield } from 'lucide-react';
+import { Home, Calendar, ClipboardList, AlertTriangle, MessageCircle, Info, Settings, Moon, Sun, Shield, ExternalLink } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
